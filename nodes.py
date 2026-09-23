@@ -25,7 +25,7 @@ class QwenImage21BlockCacheT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="QwenImage21BlockCacheT8", display_name="Qwen Image 2.1 Block Cache (T8)", category=CATEGORY,
-            description="Experimental first-block residual cache, target tokens only. Disables Core prefix KV caching; quality/speed require comparison.",
+            description="First-block target residual cache, preserving Core's reference/text KV cache. For editing, start with threshold 0.03; higher values may change pose and details.",
             is_experimental=True,
             inputs=[io.Model.Input("model"),
                     io.Float.Input("residual_diff_threshold", default=0.08, min=0, max=1, step=0.01),

@@ -87,11 +87,15 @@ def run_sampling(patcher, sigmas, uuids=None, edit=False, batch=1, error=False):
         return outputs
 
     executor = pe.WrapperExecutor.new_class_executor(execute, guider, [runtime.sample_wrapper])
-    if error:
-        with unittest.TestCase().assertRaisesRegex(RuntimeError, "test cancellation"):
+    patcher.patch_model(load_weights=False)
+    try:
+        if error:
+            with unittest.TestCase().assertRaisesRegex(RuntimeError, "test cancellation"):
+                executor.execute()
+        else:
             executor.execute()
-    else:
-        executor.execute()
+    finally:
+        patcher.unpatch_model(unpatch_weights=False)
     assert guider.model_options is original_options
     return outputs, runtimes[0]
 
@@ -116,6 +120,27 @@ class NativeTests(unittest.TestCase):
             self.assertEqual(by_type["TextEncodeQwenImage21"]["widgets_values_named"]["resolution"], 1024)
             sampler = by_type["KSampler"]["widgets_values_named"]
             self.assertEqual((sampler["seed"], sampler["steps"], sampler["cfg"]), (42, 25, 1))
+
+    def test_edit_canvas_has_reference_vae_and_conservative_cache(self):
+        workflow = json.loads((ROOT / "workflows" / "Qwen21_T8_1024_Edit.json").read_text(encoding="utf-8"))
+        by_id = {node["id"]: node for node in workflow["nodes"]}
+        by_type = {node["type"]: node for node in workflow["nodes"]}
+        links = {link[0]: link for link in workflow["links"]}
+        for link, source, source_slot, dest, dest_slot, kind in workflow["links"]:
+            self.assertIn(link, by_id[source]["outputs"][source_slot]["links"])
+            self.assertEqual(by_id[dest]["inputs"][dest_slot]["link"], link)
+        for kind, name, source in (("TextEncodeQwenImage21", "vae", "VAELoader"),
+                                   ("TextEncodeQwenImage21", "images.image_1", "LoadImage"),
+                                   ("VAEDecode", "vae", "VAELoader")):
+            socket = next(value for value in by_type[kind]["inputs"] if value["name"] == name)
+            self.assertEqual(by_id[links[socket["link"]][1]]["type"], source)
+        for kind in ("QwenImage21BlockCacheT8", "QwenImage21SpectrumT8", "QwenImage21SageAttentionT8"):
+            self.assertEqual(by_type[kind]["mode"], 0)
+        self.assertEqual(by_type["QwenImage21BlockCacheT8"]["widgets_values_named"]["residual_diff_threshold"], 0.03)
+        self.assertEqual(by_type["QwenImage21SpectrumT8"]["widgets_values_named"]["guard_threshold"], 0.08)
+        self.assertEqual(by_type["QwenImage21SolAttentionT8"]["mode"], 4)
+        self.assertFalse(by_type["QwenImage21SolAttentionT8"]["widgets_values_named"]["enabled"])
+        self.assertEqual(by_type["ModelAttentionBackend"]["mode"], 4)
 
     def test_native_full_path_matches_reference_for_t2i_edit_and_batch(self):
         for edit, batch in ((False, 1), (True, 1), (True, 2)):
@@ -152,6 +177,60 @@ class NativeTests(unittest.TestCase):
         _, state = run_sampling(patched, [0.7, 0.7, 0.6, 0.6], uuids=["positive", "negative", "positive", "negative"])
         self.assertEqual(state.cache.full, 2)
         self.assertEqual(state.cache.hits, 2)
+
+    def test_block_cache_keeps_native_reference_kv_and_restores_forward(self):
+        base = tiny_model()
+        model = base.model.diffusion_model
+        original = model.transformer_blocks[0].forward
+        patched = nodes.QwenImage21BlockCacheT8.execute(base, residual_diff_threshold=1,
+                                                       start_percent=0, end_percent=1)[0]
+        self.assertNotIn("patches_replace", patched.model_options["transformer_options"])
+        model.current_patcher = patched
+        model.reset_prefix_cache(True)
+        calls = []
+        handles = [block.register_forward_pre_hook(
+            lambda _, args, i=i: calls.append((i, args[0].shape[1], args[4])))
+            for i, block in enumerate(model.transformer_blocks)]
+        try:
+            outputs, state = run_sampling(patched, [0.7, 0.6, 0.5], edit=True)
+            self.assertEqual(state.cache.hits, 2)
+            self.assertTrue(model.prefix_cache.filled(3))
+            self.assertEqual(sum(n == prefix for _, n, prefix in calls), 3)
+            self.assertEqual(sum(i == 0 and prefix == 0 for i, _, prefix in calls), 3)
+            self.assertEqual(sum(i == 1 and prefix == 0 for i, _, prefix in calls), 1)
+            self.assertEqual(outputs[-1].shape, (1, 4, 2, 3))
+            self.assertEqual(model.transformer_blocks[0].forward, original)
+        finally:
+            for handle in handles:
+                handle.remove()
+            model.reset_prefix_cache(False)
+
+    def test_spectrum_does_not_reduce_block_consecutive_limit(self):
+        patched = nodes.QwenImage21BlockCacheT8.execute(tiny_model(True), start_percent=0, end_percent=1)[0]
+        patched = nodes.QwenImage21SpectrumT8.execute(patched, start_percent=0, end_percent=1)[0]
+        _, state = run_sampling(patched, [0.8, 0.7, 0.6, 0.5])
+        self.assertEqual((state.cache.full, state.cache.hits), (2, 2))
+
+    def test_no_skip_matches_native_with_reference_kv_enabled(self):
+        base = tiny_model()
+        model = base.model.diffusion_model
+        patched = nodes.QwenImage21BlockCacheT8.execute(base, residual_diff_threshold=0,
+                                                       start_percent=0, end_percent=1)[0]
+        model.current_patcher = patched
+        model.reset_prefix_cache(True)
+        try:
+            got, state = run_sampling(patched, [0.7, 0.6], edit=True, batch=2)
+            self.assertTrue(model.prefix_cache.filled(3))
+            model.reset_prefix_cache(True)
+            torch.manual_seed(24)
+            x, context = torch.randn(2, 4, 2, 3), torch.randn(2, 4, 8)
+            refs = [torch.randn(2, 4, 2, 2)]
+            for i, sigma in enumerate([0.7, 0.6]):
+                expected = model(x.clone(), torch.full((2,), sigma), context, refs, [2], {})
+                torch.testing.assert_close(got[i], expected, rtol=0, atol=0)
+            self.assertEqual(state.cache.hits, 0)
+        finally:
+            model.reset_prefix_cache(False)
 
     def test_sigma_repeat_and_reversal_refresh(self):
         patched = nodes.QwenImage21BlockCacheT8.execute(tiny_model(True), start_percent=0, end_percent=1)[0]

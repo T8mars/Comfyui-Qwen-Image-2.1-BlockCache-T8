@@ -94,10 +94,11 @@ class BenchmarkTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_execution_cache_is_not_a_speed_measurement(self):
         events = [{"type": "executing", "data": {"prompt_id": "test", "node": None}}]
-        state, error, _ = await self.run_fake(events)
+        history = {"status": {"completed": True, "status_str": "success"}, "outputs": {}}
+        state, error, _ = await self.run_fake(events, history=history)
         self.assertIsInstance(error, RuntimeError)
         self.assertIn("not a valid benchmark", str(error))
-        self.assertTrue(state["pending"])
+        self.assertFalse(state["pending"])
 
     def test_cli_rejects_unknown_and_multiple_modes_without_server(self):
         for mode in ("blok", "spectrum-foo", "baseline,block"):

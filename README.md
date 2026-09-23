@@ -2,20 +2,25 @@
 
 简体中文 | [English](README_EN.md)
 
-面向 **ComfyUI 原生 Qwen-Image-2.1** 的四个独立 MODEL 节点：Block Cache、Spectrum、Sage Attention 和 Sol Attention，版本 `0.1.2`。使用官方模型加载器、文本条件、采样器和 VAE，不使用 Diffusers 包装管道。
+面向 **ComfyUI 原生 Qwen-Image-2.1** 的四个独立 MODEL 节点：Block Cache、Spectrum、Sage Attention 和 Sol Attention，版本 `0.1.3`。使用官方模型加载器、文本条件、采样器和 VAE，不使用 Diffusers 包装管道。
 
-当前为实验版：已用真实 7B INT8 模型完成 512/1024 文生图、采样提速对照及前端画布运行。测试样本有限，不保证所有工作流提速或无画质变化。**Sol 的 2048 完整模型测试期间发生系统重启，原因未定；Sol 默认关闭，不作为已验证加速推荐。**
+`0.1.3` 修复图像编辑反向加速：Block/Spectrum 现在保留官方参考图和文本的前缀 KV 缓存，串接 Spectrum 不再压低 Block 的连续命中上限。真实 7B INT8、1MP 人像编辑、40 步画布对照（Core compiler 开启）：Sage 基线 **34.43 秒 → 保守组合 24.74 秒**，约减少 28% 采样时间；Kitchen 基线 **33.56 秒 → 24.54 秒**。编辑示例使用 Block `0.03`、Spectrum `0.08`，而非较激进的文生图默认值。
+
+当前仍为实验版，已验证的素材和 seed 有限，近似跳层会改变细节。**Sol 的 2048 完整模型测试期间发生系统重启，原因未定；Sol 默认关闭。** 1MP 编辑中强制启用 Sol 没有带来额外收益，勿把所有节点同时打开当作最快配置。[测试条件与画质差异](BENCHMARKS.md#image-edit-fix-013)。
 
 ## 可直接拖入画布的工作流
 
 - [1024 文生图：Kitchen + Block Cache](workflows/Qwen21_T8_1024_T2I.json)
 - [1024 文生图：Kitchen + Spectrum](workflows/Qwen21_T8_1024_Spectrum.json)
+- [1MP 图像编辑：Sage + 保守 Block/Spectrum](workflows/Qwen21_T8_1024_Edit.json)
 
 下载原始 JSON 后拖入 ComfyUI 画布，选择本机模型文件，再点击运行。它们是包含布局和连接的**前端工作流，不是 API JSON**；均已通过真实浏览器前端导入、点击运行和出图验证。紫色节点为旁路，选中后 `Ctrl+B` 切换；Sol 另外保持 `enabled=false`。
 
 另有 [1024 Sol 实验工作流](workflows/Qwen21_T8_1024_Sol.json)，已实际画布运行 25 步。关闭 Core compiler、增加显存预留后，串行对照 Kitchen 平均 16.61秒 → Sol 15.96秒，约快 4%；但出现额外乱码小字及壶盖细节改变。此图明确开启 Sol（`enabled=true, min_tokens=4096`），不是默认推荐配置；[完整条件与限制](BENCHMARKS.md#serial-1024-sol-follow-up--1024-串行复测)。不能据此认定 2048 安全。
 
-4060 Ti 16GB、1024²、25步、同 seed/提示词：原生采样约 **18–19秒**；Block Cache 约 **11.3秒**；Kitchen + Block 约 **9.6秒**；修复后的 Spectrum 约 **13.3秒**。只统计采样节点，不是完整工作流耗时。[详细测试条件、输出差异及限制](BENCHMARKS.md)。请严格串行测试，当前暂停 2048 压力测试。
+历史文生图基准（0.1.1，4060 Ti 16GB、1024²、25步）：原生采样约 **18–19秒**；Block Cache 约 **11.3秒**；Kitchen + Block 约 **9.6秒**；Spectrum 约 **13.3秒**。不是 0.1.3 重测结果。本文速度仅统计采样节点；请严格串行测试，当前暂停 2048 压力测试。
+
+编辑必须把 VAE 同时接入 `TextEncodeQwenImage21` 和解码节点；只接参考 IMAGE、漏接编码节点的 VAE，会缺少参考图 VAE 潜变量。需要保持原尺寸构图时，采样器连接该编码节点的 LATENT 输出；编辑示例按用户案例使用竖图尺寸，允许重新构图。参考照片不随插件分发，请选择自己的图。
 
 ## 安装与连接
 
@@ -57,7 +62,7 @@ Comfy Kitchen 使用官方 `Model Attention Backend` 节点选择 `comfy kitchen
 | Qwen Image 2.1 Sage Attention (T8) | 调用 Core 的 Sage 适配，保留矩形 Q/K、mask 和原生回退行为 | 无额外参数 |
 | Qwen Image 2.1 Sol Attention (T8) | 实验性稀疏注意力；1024 限定条件测试通过，2048 重启原因未明，默认不执行 | enabled `false`，tau `1.0`，min_tokens `12288`，范围 `0.15–0.85` |
 
-Block Cache 与 T8 Spectrum 可各自使用，也可前后串接：Block Cache 优先，未命中时再尝试预测；只将真实完整计算写入历史；使用二者较小的连续跳过上限。缓存位置有任一选择 CPU 就用 CPU；内存预算取较小值。这些规则与连接顺序无关。
+Block Cache 与 T8 Spectrum 可各自使用，也可前后串接：Block Cache 优先，未命中时再尝试预测；只将真实完整计算写入历史。每种算法用自己的上限检查自上次完整计算以来的连续跳过次数，Spectrum 不再把 Block 上限从 2 压成 1。缓存位置有任一选择 CPU 就用 CPU；内存预算取较小值。这些规则与连接顺序无关。组合收益取决于实际命中，`spectrum=0` 表示没有预测收益。
 
 `cache_device=cpu` 为默认，`max_cache_mb=1024` 限制保留的缓存，超限淘汰旧流；运行时临时 anchor、重建输出和模型内存不计入该预算。bf16、2048² 输出时，一个目标 hidden 残差约 128 MiB，4 条 Spectrum 历史约 512 MiB/条件流；CFG 双流可能翻倍。预测按 512 tokens 分块 FP32 累加，避免构造巨大的特征系数矩阵。
 
@@ -68,7 +73,7 @@ Block Cache 与 T8 Spectrum 可各自使用，也可前后串接：Block Cache �
 - 只识别原生 `QwenImage21Transformer2DModel`。不把旧 Qwen-Image、2512、H3 当成同一模型。
 - Qwen2.1 是 32 层单流结构，只缓存目标图像 tail residual；文本/参考图不会作为待重建输出缓存。完整步仍走官方融合 RMS/RoPE、AdaLN、SwiGLU、量化线性层和 offload。
 - 缓存仅属于一次采样，按条件 UUID、CFG 分支、shape、dtype、device、参考图布局区分。未知 UUID/sigma 不复用；sigma 重复或反向时刷新。正常完成、异常或取消均释放缓存。
-- **Block/Spectrum 挂载 block hooks 后，当前 Core 会停用原生 prefix KV 缓存。** 多参考图编辑可能因此变慢。只有 Sage/Sol 时不挂 block hooks，可继续使用官方 prefix cache。先做相同输入的有/无缓存对照。
+- **通过 ModelPatcher 包装首尾块，保留原生 prefix KV 缓存。** 参考/文本单独计算时不参与跳层；目标图像路径才复用残差。无需改动 Core 文件；补丁按 ModelPatcher 生命周期恢复。官方 `Qwen Image 2.1 Cache` 的设备和精度设置仍由 Core 处理。
 - 普通静态 LoRA 继续由原生加载器处理；存在 scheduled LoRA 的 `hook_patches` 时，Block/Spectrum 自动完整计算，防止跨权重缓存。
 - Sol 将目标矩形 Q 前补查询后调用共享 kernel，K/V 不增删；丢弃补齐查询的输出，强制 prefix KV 和混合 64-token query 块精确计算。mask、参考图段、短序列、FP32、无内核或禁用低精度时保留原后端。
 - Sol 需明确设置 `enabled=true` 才会尝试调用；1024² 约 4096 个目标 tokens，还会低于默认门槛而走 dense。2048 测试中断，不能据此宣称稳定或提速，不建议开启。
@@ -87,9 +92,11 @@ python -m compileall -q __init__.py nodes.py cache.py runtime.py attention.py te
 python tests/gpu_smoke.py
 ```
 
-2026-09-23，Core `e638023d`，Comfy Kitchen `0.2.35`，Torch `2.10.0+cu130`：39 项 CPU/静态测试连续串行运行 50 轮通过（1,950 次，逐轮打乱顺序），另有 4 项浏览器生命周期模拟测试；这不是 50 次大模型验证。官方小型随机权重模型的文生图/编辑/多 batch 完整路径与原生结果相同；合成残差路径证实真正跳过后续 block 并执行原生输出头。
+0.1.3：43 项 CPU/静态测试通过，新增带真实 Core 前缀 KV 的跳层、补丁恢复、无跳步 batch=2 数值等价、组合命中上限及编辑画布 VAE 接线回归。真实 7B INT8 编辑工作流已在浏览器画布导入、点击运行并保存 PNG，覆盖 Block、Spectrum、组合和实际调用 Sol 的组合；详见 [BENCHMARKS.md](BENCHMARKS.md)。
 
-本次交叉检查修复：缓存/Spectrum 低精度残差或重建溢出时回退真实计算；混合 sigma 批次不启用 Sol；测试提交后状态不明时保留锁，浏览器异常也关闭。API 测试一次只允许一个明确模式，GPU 探针也使用共享锁。新增检查后的 GPU 速度尚未重测，历史基准不代表本次修复后的重新测量。
+历史 0.1.2 审查：Core `e638023d`，Comfy Kitchen `0.2.35`，Torch `2.10.0+cu130`，39 项 CPU/静态测试串行运行 50 轮（1,950 次），另有 4 项浏览器生命周期模拟测试；不是 50 次大模型验证。
+
+已保留低精度残差/重建溢出回退、混合 sigma 不启用 Sol、异常释放和串行测试锁。编辑新基准包含这些检查；早期文生图计时仍保留其历史来源。
 
 RTX 4060 Ti 小张量探针：BF16/FP16 Sol compiled-vs-eager 相对 L2 约 `0.01225/0.01234`；这是数值测试，不代表完整模型 Sol 稳定。真实 INT8 7B、原生 DynamicVRAM、512/1024 采样与画布验证见 [BENCHMARKS.md](BENCHMARKS.md)。修复了 Spectrum 默认二次外推被旧限制全部拒绝的问题；1024 实测预测命中 9/25 次，Block 命中 11/25 次。
 
@@ -99,4 +106,4 @@ RTX 4060 Ti 小张量探针：BF16/FP16 Sol compiled-vs-eager 相对 L2 约 `0.0
 
 代码仓库：[T8mars/Comfyui-Qwen-Image-2.1-BlockCache-T8](https://github.com/T8mars/Comfyui-Qwen-Image-2.1-BlockCache-T8)。Registry 包 ID：`qwen-image-21-blockcache-t8`；Publisher：`t8star`。采用 [ComfyUI 官方发布流程](https://docs.comfy.org/registry/publishing)，推送 `pyproject.toml` 更新后由 GitHub Actions 发布；GitHub 推送成功不等于 Registry 已完成处理，请查看 [发布任务](https://github.com/T8mars/Comfyui-Qwen-Image-2.1-BlockCache-T8/actions/workflows/publish_action.yml) 和 Registry 状态。
 
-`0.1.2`：修复低精度缓存/Spectrum 溢出和混合 sigma 的 Sol 窗口；加强串行测试锁与异常清理；新增已实际画布运行的 1024 Sol 实验工作流。研究记录、机器日志、模型及生成图片不随包发布。
+`0.1.3`：修复编辑时失去官方前缀 KV 缓存造成的减速；修复组合命中上限；减少残差 CPU 传输；新增实测编辑画布。研究记录、机器日志、模型、参考照片及生成图片不随包发布。

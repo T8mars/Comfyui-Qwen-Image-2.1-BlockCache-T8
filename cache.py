@@ -76,7 +76,6 @@ class CacheRuntime:
         self.spectrum = spectrum
         configs = [c for c in (block, spectrum) if c is not None]
         self.windows = {id(c): (float(model_sampling.percent_to_sigma(c.start_percent)), float(model_sampling.percent_to_sigma(c.end_percent))) for c in configs}
-        self.max_hits = min(c.max_consecutive_hits for c in configs)
         self.device = "cpu" if any(c.cache_device == "cpu" for c in configs) else "gpu"
         self.budget = min(c.max_cache_mb for c in configs) * 1024 * 1024
         self.stride = block.metric_stride if block else 8
@@ -111,12 +110,12 @@ class CacheRuntime:
         return float(((current - previous).abs().mean(axes) / previous.abs().mean(axes).clamp_min(1e-6)).max())
 
     def replay(self, stream, indicator, sigma, target):
-        if not stream.history or stream.indicator is None or stream.consecutive >= self.max_hits:
+        if not stream.history or stream.indicator is None:
             return None, None
         score = self.difference(indicator, stream.indicator)
         if not math.isfinite(score):
             return None, None
-        if self.block and self.window(self.block, sigma) and score < self.block.threshold:
+        if self.block and stream.consecutive < self.block.max_consecutive_hits and self.window(self.block, sigma) and score < self.block.threshold:
             result = target + stream.history[-1][1].to(target)
             if not torch.isfinite(result).all():
                 return None, None
@@ -124,7 +123,7 @@ class CacheRuntime:
             stream.consecutive += 1
             return result, "cache"
         config = self.spectrum
-        if config and self.window(config, sigma) and score < config.guard_threshold and len(stream.history) >= config.history:
+        if config and stream.consecutive < config.max_consecutive_hits and self.window(config, sigma) and score < config.guard_threshold and len(stream.history) >= config.history:
             weights = forecast_weights([s for s, _ in stream.history], sigma, config.degree, config.ridge)
             if weights is not None:
                 result = target.clone()
@@ -145,8 +144,7 @@ class CacheRuntime:
         return None, None
 
     def store(self, stream, indicator, sigma, target, anchor):
-        tail = self.copy(target)
-        tail.sub_(anchor)
+        tail = self.copy(target - anchor)
         if not torch.isfinite(tail).all():
             stream.clear()
             return
@@ -181,7 +179,6 @@ class ForwardState:
 
 
 class CacheHit(Exception):
-    def __init__(self, target, temb):
+    def __init__(self, target):
         super().__init__()
         self.target = target
-        self.temb = temb

@@ -29,7 +29,7 @@ const variant = process.argv.includes('--sol') ? 'Sol' : process.argv.includes('
     executions.set(prompt_id, state);
   }));
   page.on('pageerror', e => console.log('PAGEERROR', String(e)));
-  await page.goto('http://127.0.0.1:8189', {waitUntil: 'networkidle'});
+  await page.goto(process.env.COMFY_URL || 'http://127.0.0.1:8189', {waitUntil: 'networkidle'});
   await page.waitForFunction(() => !!window.app?.graph, {timeout: 60000});
   await fs.mkdir(path.join(root, 'benchmark_results'), {recursive: true});
   const workflow = await page.evaluate((variant) => {
@@ -80,7 +80,7 @@ const variant = process.argv.includes('--sol') ? 'Sol' : process.argv.includes('
     vae.connect(0,decode,decode.findInputSlot('vae'));
     decode.connect(0,save,save.findInputSlot('images'));
     const note = create('Note', 'READ ME / 使用说明', [1690,600], {
-      text:'官方 Qwen-Image-2.1 管道 / 1024 / 25步 / 固定seed42。\n默认启用 Kitchen + T8 Block Cache。\n紫色节点为旁路：选中后 Ctrl+B 启用/旁路。\nSage、Sol、Spectrum 可以独立使用；不要一次盲目全开。\nSol 默认关闭，min_tokens=12288，1024图不会启用稀疏内核；2048压力测试暂停。\nBlock/Spectrum 会禁用当前Core前缀KV缓存，多参考编辑须单独对照。\nCPU cache只占缓存内存，不表示主模型在CPU执行。\n请自行选择已安装的Qwen3-VL 8B编码器，模型不自动下载。'});
+      text:'官方 Qwen-Image-2.1 文生图 / 1024 / 25步 / 固定seed42。\n默认启用 Kitchen + T8 Block Cache。\n紫色节点为旁路：选中后 Ctrl+B 启用/旁路。\nSage 与 Kitchen 选择一个；Sol、Spectrum 按需使用，不必全开。\n0.1.3 保留 Core 前缀 KV 缓存；Block/Spectrum 各用自己的连续上限。\n图像编辑请用 Qwen21_T8_1024_Edit.json，参考图和 VAE 都须接入文本编码节点。\nCPU cache只占缓存内存，不表示主模型在CPU执行。\n请自行选择已安装的模型，模型不自动下载。'});
     note.size = [470,330];
     text.pos = [30,740];
     kitchen.pos = [460,80];
@@ -106,7 +106,7 @@ const variant = process.argv.includes('--sol') ? 'Sol' : process.argv.includes('
       sol.title = '07 / T8 Sol / ON / 1024 TEST';
       sol.widgets.find(w => w.name === 'enabled').value = true;
       sol.widgets.find(w => w.name === 'min_tokens').value = 4096;
-      note.widgets[0].value = '1024 Sol独立测试 / 25步 / seed42 / tau1。\nKitchen + Sol启用；Block/Spectrum/Sage旁路。\nmin_tokens=4096、enabled=true确保实际运行Sol，不是dense回退。\n本轮启动参数：--reserve-vram 5 --vram-headroom 3 --disable-comfy-compiler。\n严格串行，完成后卸载模型再测试下一项。\n2048曾发生系统重启，原因未明；本图仅用于1024测试，不证明2048安全或提速。\n需要关闭Sol时将enabled设false，或选中节点Ctrl+B旁路。';
+      note.widgets[0].value = '1024 Sol独立实验 / 25步 / seed42 / tau1。\nKitchen + Sol启用；Block/Spectrum/Sage旁路。\nmin_tokens=4096、enabled=true；终端 kernel>0 才表示实际调用。\n已测安全余量：--reserve-vram 5 --vram-headroom 3 --disable-comfy-compiler。\n历史文生图约4%采样收益，但文字/细节变化；1MP编辑叠加Sol没有更快。\n严格串行，完成后卸载模型。2048曾发生系统重启，原因未明，暂停压力测试。\n关闭Sol：enabled=false 或 Ctrl+B旁路；编辑请用单独的 Edit 工作流。';
     }
     if (variant !== 'Sol') note.widgets[0].value += '\nSol的2048测试中发生过系统重启，默认disabled。测试必须严格串行，2048压力测试暂停。';
     save.widgets.find(w => w.name === 'filename_prefix').value = 'Qwen21_T8_Canvas_' + variant;
@@ -129,6 +129,7 @@ const variant = process.argv.includes('--sol') ? 'Sol' : process.argv.includes('
     const queue = await page.evaluate(async () => (await (await fetch('/queue')).json()));
     if (queue.queue_running.length || queue.queue_pending.length) throw new Error('ComfyUI is busy; run tests strictly one at a time.');
     const responsePromise = page.waitForResponse(r => r.url().endsWith('/prompt') && r.request().method() === 'POST', {timeout:30000});
+    responsePromise.catch(() => {});
     console.log('BUTTONS', await page.getByRole('button').allTextContents());
     pending = true;
     await page.getByRole('button',{name:'运行',exact:true}).click();

@@ -1,15 +1,15 @@
 {
-  "id": "412d2dbf-bc09-43f4-b7d5-a7ea1d1501c2",
+  "id": "f80185cf-f3d9-433b-a3ab-aede678ec63e",
   "revision": 0,
-  "last_node_id": 13,
-  "last_link_id": 13,
+  "last_node_id": 16,
+  "last_link_id": 18,
   "nodes": [
     {
       "id": 1,
       "type": "UNETLoader",
       "pos": [
         30,
-        80
+        60
       ],
       "size": [
         270,
@@ -50,7 +50,9 @@
       ],
       "title": "01 / Official Qwen 2.1 model",
       "properties": {
-        "Node name for S&R": "UNETLoader"
+        "Node name for S&R": "UNETLoader",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
       },
       "widgets_values": [
         "qwen_image_2.1_int8_convrot.safetensors",
@@ -66,7 +68,7 @@
       "type": "CLIPLoader",
       "pos": [
         30,
-        300
+        270
       ],
       "size": [
         270,
@@ -117,7 +119,9 @@
       ],
       "title": "02 / Qwen3-VL 8B text encoder",
       "properties": {
-        "Node name for S&R": "CLIPLoader"
+        "Node name for S&R": "CLIPLoader",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
       },
       "widgets_values": [
         "qwen3vl_8b_fp8_scaled.safetensors",
@@ -135,7 +139,7 @@
       "type": "VAELoader",
       "pos": [
         30,
-        520
+        470
       ],
       "size": [
         270,
@@ -161,13 +165,16 @@
           "name": "VAE",
           "type": "VAE",
           "links": [
-            12
+            12,
+            18
           ]
         }
       ],
       "title": "03 / Official Qwen 2.1 VAE",
       "properties": {
-        "Node name for S&R": "VAELoader"
+        "Node name for S&R": "VAELoader",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
       },
       "widgets_values": [
         "qwen_image_2.1_vae_bf16.safetensors"
@@ -180,15 +187,15 @@
       "id": 4,
       "type": "TextEncodeQwenImage21",
       "pos": [
-        30,
-        740
+        830,
+        460
       ],
       "size": [
-        370,
-        350
+        390,
+        390
       ],
       "flags": {},
-      "order": 5,
+      "order": 8,
       "mode": 0,
       "inputs": [
         {
@@ -198,8 +205,16 @@
           "link": 1
         },
         {
+          "label": "参考图 1 (Image-1)",
           "localized_name": "image_1",
           "name": "images.image_1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 17
+        },
+        {
+          "localized_name": "image_2",
+          "name": "images.image_2",
           "shape": 7,
           "type": "IMAGE",
           "link": null
@@ -209,7 +224,7 @@
           "name": "vae",
           "shape": 7,
           "type": "VAE",
-          "link": null
+          "link": 18
         },
         {
           "localized_name": "prompt",
@@ -260,22 +275,22 @@
           "localized_name": "latent",
           "name": "latent",
           "type": "LATENT",
-          "links": [
-            10
-          ]
+          "links": []
         }
       ],
       "title": "04 / Prompt + resolution / official",
       "properties": {
-        "Node name for S&R": "TextEncodeQwenImage21"
+        "Node name for S&R": "TextEncodeQwenImage21",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
       },
       "widgets_values": [
-        "A studio photograph of a small red ceramic teapot on a pale wooden table, a white card next to it clearly reads \"QWEN 2.1\", soft window lighting, a green plant in the background, realistic glaze and shadows, clean composition.",
+        "女人吃苹果",
         "",
         1024
       ],
       "widgets_values_named": {
-        "prompt": "A studio photograph of a small red ceramic teapot on a pale wooden table, a white card next to it clearly reads \"QWEN 2.1\", soft window lighting, a green plant in the background, realistic glaze and shadows, clean composition.",
+        "prompt": "女人吃苹果",
         "negative_prompt": "",
         "resolution": 1024
       }
@@ -284,16 +299,16 @@
       "id": 5,
       "type": "ModelAttentionBackend",
       "pos": [
-        460,
-        80
+        430,
+        60
       ],
       "size": [
         270,
         58
       ],
       "flags": {},
-      "order": 4,
-      "mode": 0,
+      "order": 6,
+      "mode": 4,
       "inputs": [
         {
           "localized_name": "model",
@@ -321,9 +336,11 @@
           ]
         }
       ],
-      "title": "05 / Comfy Kitchen (official)",
+      "title": "Official Kitchen / BYPASS",
       "properties": {
-        "Node name for S&R": "ModelAttentionBackend"
+        "Node name for S&R": "ModelAttentionBackend",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
       },
       "widgets_values": [
         "comfy kitchen attention"
@@ -336,16 +353,16 @@
       "id": 6,
       "type": "QwenImage21SageAttentionT8",
       "pos": [
-        460,
-        240
+        430,
+        210
       ],
       "size": [
         276.601171875,
         26
       ],
       "flags": {},
-      "order": 6,
-      "mode": 4,
+      "order": 9,
+      "mode": 0,
       "inputs": [
         {
           "localized_name": "model",
@@ -364,7 +381,7 @@
           ]
         }
       ],
-      "title": "06 / T8 Sage / BYPASSED",
+      "title": "T8 Sage / ON",
       "properties": {
         "Node name for S&R": "QwenImage21SageAttentionT8"
       }
@@ -373,15 +390,15 @@
       "id": 7,
       "type": "QwenImage21SolAttentionT8",
       "pos": [
-        460,
-        400
+        430,
+        340
       ],
       "size": [
         323.776953125,
         154
       ],
       "flags": {},
-      "order": 7,
+      "order": 10,
       "mode": 4,
       "inputs": [
         {
@@ -446,20 +463,20 @@
           ]
         }
       ],
-      "title": "07 / T8 Sol / BYPASSED at 1024",
+      "title": "QwenImage21SolAttentionT8 / BYPASS",
       "properties": {
         "Node name for S&R": "QwenImage21SolAttentionT8"
       },
       "widgets_values": [
         1,
-        12288,
+        4096,
         0.15,
         0.85,
         false
       ],
       "widgets_values_named": {
         "tau": 1,
-        "min_tokens": 12288,
+        "min_tokens": 4096,
         "start_percent": 0.15,
         "end_percent": 0.85,
         "enabled": false
@@ -469,15 +486,15 @@
       "id": 8,
       "type": "QwenImage21BlockCacheT8",
       "pos": [
-        460,
-        710
+        430,
+        660
       ],
       "size": [
         322.683203125,
         202
       ],
       "flags": {},
-      "order": 8,
+      "order": 11,
       "mode": 0,
       "inputs": [
         {
@@ -560,12 +577,12 @@
           ]
         }
       ],
-      "title": "08 / T8 Block Cache / ON",
+      "title": "QwenImage21BlockCacheT8 / ON",
       "properties": {
         "Node name for S&R": "QwenImage21BlockCacheT8"
       },
       "widgets_values": [
-        0.08,
+        0.03,
         0.1,
         0.85,
         2,
@@ -574,7 +591,7 @@
         1024
       ],
       "widgets_values_named": {
-        "residual_diff_threshold": 0.08,
+        "residual_diff_threshold": 0.03,
         "start_percent": 0.1,
         "end_percent": 0.85,
         "max_consecutive_hits": 2,
@@ -587,16 +604,16 @@
       "id": 9,
       "type": "QwenImage21SpectrumT8",
       "pos": [
-        870,
-        80
+        830,
+        60
       ],
       "size": [
         303.6998046875,
         250
       ],
       "flags": {},
-      "order": 9,
-      "mode": 4,
+      "order": 12,
+      "mode": 0,
       "inputs": [
         {
           "localized_name": "model",
@@ -696,7 +713,7 @@
           ]
         }
       ],
-      "title": "09 / T8 Spectrum / BYPASSED",
+      "title": "QwenImage21SpectrumT8 / ON",
       "properties": {
         "Node name for S&R": "QwenImage21SpectrumT8"
       },
@@ -704,7 +721,7 @@
         4,
         2,
         0.01,
-        0.25,
+        0.08,
         0.15,
         0.85,
         1,
@@ -715,7 +732,7 @@
         "history": 4,
         "degree": 2,
         "ridge": 0.01,
-        "guard_threshold": 0.25,
+        "guard_threshold": 0.08,
         "start_percent": 0.15,
         "end_percent": 0.85,
         "max_consecutive_hits": 1,
@@ -727,15 +744,15 @@
       "id": 10,
       "type": "KSampler",
       "pos": [
-        870,
-        500
+        1270,
+        60
       ],
       "size": [
         270,
-        262
+        474.00000000000006
       ],
       "flags": {},
-      "order": 10,
+      "order": 13,
       "mode": 0,
       "inputs": [
         {
@@ -760,7 +777,7 @@
           "localized_name": "Latent图像",
           "name": "latent_image",
           "type": "LATENT",
-          "link": 10
+          "link": 16
         },
         {
           "localized_name": "种子",
@@ -829,12 +846,14 @@
       ],
       "title": "10 / Native sampler / fixed seed",
       "properties": {
-        "Node name for S&R": "KSampler"
+        "Node name for S&R": "KSampler",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
       },
       "widgets_values": [
         42,
         "fixed",
-        25,
+        40,
         1,
         "euler",
         "simple",
@@ -843,7 +862,7 @@
       "widgets_values_named": {
         "seed": 42,
         "control_after_generate": "fixed",
-        "steps": 25,
+        "steps": 40,
         "cfg": 1,
         "sampler_name": "euler",
         "scheduler": "simple",
@@ -854,15 +873,15 @@
       "id": 11,
       "type": "VAEDecode",
       "pos": [
-        870,
-        930
+        1270,
+        500
       ],
       "size": [
-        140,
+        192.4481414794922,
         46
       ],
       "flags": {},
-      "order": 11,
+      "order": 14,
       "mode": 0,
       "inputs": [
         {
@@ -890,22 +909,24 @@
       ],
       "title": "11 / Native VAE decode",
       "properties": {
-        "Node name for S&R": "VAEDecode"
+        "Node name for S&R": "VAEDecode",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
       }
     },
     {
       "id": 12,
       "type": "SaveImage",
       "pos": [
-        1260,
-        80
+        1670,
+        60
       ],
       "size": [
-        500,
-        560
+        460,
+        640
       ],
       "flags": {},
-      "order": 12,
+      "order": 15,
       "mode": 0,
       "inputs": [
         {
@@ -934,25 +955,27 @@
       ],
       "title": "12 / Output (drag PNG back to restore)",
       "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0",
         "Node name for S&R": "SaveImage"
       },
       "widgets_values": [
-        "Qwen21_T8_Canvas_T2I"
+        "Qwen21_T8_Edit"
       ],
       "widgets_values_named": {
-        "filename_prefix": "Qwen21_T8_Canvas_T2I"
+        "filename_prefix": "Qwen21_T8_Edit"
       }
     },
     {
       "id": 13,
       "type": "Note",
       "pos": [
-        1260,
-        720
+        1270,
+        750
       ],
       "size": [
-        470,
-        330
+        520,
+        400
       ],
       "flags": {},
       "order": 3,
@@ -964,25 +987,237 @@
         "Node name for S&R": "Note"
       },
       "widgets_values": [
-        "官方 Qwen-Image-2.1 文生图 / 1024 / 25步 / 固定seed42。\n默认启用 Kitchen + T8 Block Cache。\n紫色节点为旁路：选中后 Ctrl+B 启用/旁路。\nSage 与 Kitchen 选择一个；Sol、Spectrum 按需使用，不必全开。\n0.1.3 保留 Core 前缀 KV 缓存；Block/Spectrum 各用自己的连续上限。\n图像编辑请用 Qwen21_T8_1024_Edit.json，参考图和 VAE 都须接入文本编码节点。\nCPU cache只占缓存内存，不表示主模型在CPU执行。\n请自行选择已安装的模型，模型不自动下载。\nSol的2048测试中发生过系统重启，默认disabled。测试必须严格串行，2048压力测试暂停。"
+        "Qwen 2.1 原生图像编辑 / Native image edit\n参考图和 VAE 都必须连接 TextEncodeQwenImage21。请上传自己的参考图。\nSeed 42 / 40 steps / resolution 1024. Mode: combined; backend: sage.\nBlock threshold: 0.03; Spectrum guard: 0.08.\nSage/Kitchen 选一个；紫色表示旁路，Ctrl+B切换。Sol本尺寸未测得额外收益。\n竖图尺寸由 ResolutionSelector 控制；保留参考图比例可改接编码器 LATENT 输出到采样器。\n保留官方 prefix KV 缓存。近似跳层仍会改变细节；请严格串行运行。"
       ],
       "widgets_values_named": {
-        "text": "官方 Qwen-Image-2.1 文生图 / 1024 / 25步 / 固定seed42。\n默认启用 Kitchen + T8 Block Cache。\n紫色节点为旁路：选中后 Ctrl+B 启用/旁路。\nSage 与 Kitchen 选择一个；Sol、Spectrum 按需使用，不必全开。\n0.1.3 保留 Core 前缀 KV 缓存；Block/Spectrum 各用自己的连续上限。\n图像编辑请用 Qwen21_T8_1024_Edit.json，参考图和 VAE 都须接入文本编码节点。\nCPU cache只占缓存内存，不表示主模型在CPU执行。\n请自行选择已安装的模型，模型不自动下载。\nSol的2048测试中发生过系统重启，默认disabled。测试必须严格串行，2048压力测试暂停。"
+        "text": "Qwen 2.1 原生图像编辑 / Native image edit\n参考图和 VAE 都必须连接 TextEncodeQwenImage21。请上传自己的参考图。\nSeed 42 / 40 steps / resolution 1024. Mode: combined; backend: sage.\nBlock threshold: 0.03; Spectrum guard: 0.08.\nSage/Kitchen 选一个；紫色表示旁路，Ctrl+B切换。Sol本尺寸未测得额外收益。\n竖图尺寸由 ResolutionSelector 控制；保留参考图比例可改接编码器 LATENT 输出到采样器。\n保留官方 prefix KV 缓存。近似跳层仍会改变细节；请严格串行运行。"
       },
       "color": "#432",
       "bgcolor": "#653"
+    },
+    {
+      "id": 14,
+      "type": "EmptyLatentImage",
+      "pos": [
+        830,
+        1190
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "宽度",
+          "name": "width",
+          "type": "INT",
+          "widget": {
+            "name": "width"
+          },
+          "link": 14
+        },
+        {
+          "localized_name": "高度",
+          "name": "height",
+          "type": "INT",
+          "widget": {
+            "name": "height"
+          },
+          "link": 15
+        },
+        {
+          "localized_name": "批量大小",
+          "name": "batch_size",
+          "type": "INT",
+          "widget": {
+            "name": "batch_size"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "Latent",
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            16
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "EmptyLatentImage",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
+      },
+      "widgets_values": [
+        1024,
+        1024,
+        1
+      ],
+      "widgets_values_named": {
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1
+      }
+    },
+    {
+      "id": 15,
+      "type": "ResolutionSelector",
+      "pos": [
+        830,
+        940
+      ],
+      "size": [
+        270,
+        150
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "宽高比",
+          "name": "aspect_ratio",
+          "type": "COMBO",
+          "widget": {
+            "name": "aspect_ratio"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "百万像素",
+          "name": "megapixels",
+          "type": "FLOAT",
+          "widget": {
+            "name": "megapixels"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "倍数",
+          "name": "multiple",
+          "type": "INT",
+          "widget": {
+            "name": "multiple"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "preview",
+          "name": "preview",
+          "shape": 7,
+          "type": "RESOLUTION_PREVIEW",
+          "widget": {
+            "name": "preview"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "宽度",
+          "name": "width",
+          "type": "INT",
+          "links": [
+            14
+          ]
+        },
+        {
+          "localized_name": "高度",
+          "name": "height",
+          "type": "INT",
+          "links": [
+            15
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ResolutionSelector",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
+      },
+      "widgets_values": [
+        "9:16 (Portrait Widescreen)",
+        1,
+        8
+      ],
+      "widgets_values_named": {
+        "aspect_ratio": "9:16 (Portrait Widescreen)",
+        "megapixels": 1,
+        "multiple": 8
+      }
+    },
+    {
+      "id": 16,
+      "type": "LoadImage",
+      "pos": [
+        30,
+        640
+      ],
+      "size": [
+        340,
+        460
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "图像",
+          "name": "image",
+          "type": "COMBO",
+          "widget": {
+            "name": "image"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "选择文件上传",
+          "name": "upload",
+          "type": "IMAGEUPLOAD",
+          "widget": {
+            "name": "upload"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "图像",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            17
+          ]
+        },
+        {
+          "localized_name": "遮罩",
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
+      },
+      "widgets_values": [
+        "10A.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "10A.jpg",
+        "upload": "image"
+      }
     }
   ],
   "links": [
     [
-      1,
-      2,
-      0,
-      4,
-      0,
-      "CLIP"
-    ],
-    [
       2,
       1,
       0,
@@ -1045,14 +1280,6 @@
       10,
       2,
       "CONDITIONING"
-    ],
-    [
-      10,
-      4,
-      2,
-      10,
-      3,
-      "LATENT"
     ],
     [
       11,
@@ -1077,17 +1304,75 @@
       12,
       0,
       "IMAGE"
+    ],
+    [
+      14,
+      15,
+      0,
+      14,
+      0,
+      "INT"
+    ],
+    [
+      15,
+      15,
+      1,
+      14,
+      1,
+      "INT"
+    ],
+    [
+      16,
+      14,
+      0,
+      10,
+      3,
+      "LATENT"
+    ],
+    [
+      1,
+      2,
+      0,
+      4,
+      0,
+      "CLIP"
+    ],
+    [
+      17,
+      16,
+      0,
+      4,
+      1,
+      "IMAGE"
+    ],
+    [
+      18,
+      3,
+      0,
+      4,
+      3,
+      "VAE"
     ]
   ],
   "groups": [],
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.75,
+      "scale": 0.65,
       "offset": [
         100,
-        80
+        100
       ]
+    },
+    "frontendVersion": "1.53.6",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "extensions": {
+    "seed_widgets": {
+      "10": 0
     }
   },
   "version": 0.4

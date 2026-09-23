@@ -1,5 +1,5 @@
 {
-  "id": "fb448fe0-fba1-41c6-995e-3abbbd811865",
+  "id": "bc519b91-4cfd-48c5-860a-7fdad6286e7f",
   "revision": 0,
   "last_node_id": 13,
   "last_link_id": 13,
@@ -964,10 +964,10 @@
         "Node name for S&R": "Note"
       },
       "widgets_values": [
-        "1024 Sol独立测试 / 25步 / seed42 / tau1。\nKitchen + Sol启用；Block/Spectrum/Sage旁路。\nmin_tokens=4096、enabled=true确保实际运行Sol，不是dense回退。\n本轮启动参数：--reserve-vram 5 --vram-headroom 3 --disable-comfy-compiler。\n严格串行，完成后卸载模型再测试下一项。\n2048曾发生系统重启，原因未明；本图仅用于1024测试，不证明2048安全或提速。\n需要关闭Sol时将enabled设false，或选中节点Ctrl+B旁路。"
+        "1024 Sol独立实验 / 25步 / seed42 / tau1。\nKitchen + Sol启用；Block/Spectrum/Sage旁路。\nmin_tokens=4096、enabled=true；终端 kernel>0 才表示实际调用。\n已测安全余量：--reserve-vram 5 --vram-headroom 3 --disable-comfy-compiler。\n历史文生图约4%采样收益，但文字/细节变化；1MP编辑叠加Sol没有更快。\n严格串行，完成后卸载模型。2048曾发生系统重启，原因未明，暂停压力测试。\n关闭Sol：enabled=false 或 Ctrl+B旁路；编辑请用单独的 Edit 工作流。"
       ],
       "widgets_values_named": {
-        "text": "1024 Sol独立测试 / 25步 / seed42 / tau1。\nKitchen + Sol启用；Block/Spectrum/Sage旁路。\nmin_tokens=4096、enabled=true确保实际运行Sol，不是dense回退。\n本轮启动参数：--reserve-vram 5 --vram-headroom 3 --disable-comfy-compiler。\n严格串行，完成后卸载模型再测试下一项。\n2048曾发生系统重启，原因未明；本图仅用于1024测试，不证明2048安全或提速。\n需要关闭Sol时将enabled设false，或选中节点Ctrl+B旁路。"
+        "text": "1024 Sol独立实验 / 25步 / seed42 / tau1。\nKitchen + Sol启用；Block/Spectrum/Sage旁路。\nmin_tokens=4096、enabled=true；终端 kernel>0 才表示实际调用。\n已测安全余量：--reserve-vram 5 --vram-headroom 3 --disable-comfy-compiler。\n历史文生图约4%采样收益，但文字/细节变化；1MP编辑叠加Sol没有更快。\n严格串行，完成后卸载模型。2048曾发生系统重启，原因未明，暂停压力测试。\n关闭Sol：enabled=false 或 Ctrl+B旁路；编辑请用单独的 Edit 工作流。"
       },
       "color": "#432",
       "bgcolor": "#653"

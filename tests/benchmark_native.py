@@ -117,14 +117,14 @@ async def run(args, state):
                             previous, previous_time = payload.get("node"), now
                             if previous is None:
                                 break
-                if "100" not in durations:
-                    raise RuntimeError("KSampler was cached or failed: not a valid benchmark")
                 async with session.get(args.url + "/history/" + prompt_id) as response:
                     history = (await response.json())[prompt_id]
                 if history["status"]["status_str"] in ("success", "error"):
                     state["pending"] = False
                 if not history["status"]["completed"] or history["status"]["status_str"] != "success":
                     raise RuntimeError(history["status"])
+                if "100" not in durations:
+                    raise RuntimeError("KSampler was cached or failed: not a valid benchmark")
                 data.update(prompt_id=prompt_id, durations=durations, wall_seconds=time.perf_counter() - start,
                             outputs=history["outputs"], status=history["status"])
                 path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")

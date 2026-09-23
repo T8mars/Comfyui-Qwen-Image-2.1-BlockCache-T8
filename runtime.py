@@ -32,7 +32,7 @@ def validate_patches(options, block_count):
     replacements = options.get("patches_replace", {}).get("dit", {})
     for index in range(block_count):
         patch = replacements.get(("single_block", index))
-        if patch is not None and not isinstance(patch, BoundaryPatch):
+        if patch is not None:
             raise ValueError("Qwen Image 2.1 T8 cache conflicts with another single_block replacement")
     for hook in ("single_block", "post_input", "attn1_patch"):
         if options.get("patches", {}).get(hook):
@@ -141,40 +141,46 @@ def diffusion_wrapper(executor, x, timestep, context, ref_latents=None, image_sl
     except CacheHit as hit:
         model = executor.class_obj
         finish_prefetch(model, x.device)
-        hidden = model.norm_out(hit.target, hit.temb[:-1])
+        # Match Core's compute-dtype timestep rounding before the native output head.
+        t = ((timestep * 1000).to(x.dtype) / 1000).to(x.dtype)
+        temb = model.time_text_embed(torch.cat([t, t.new_zeros(1)]), x.dtype)
+        hidden = model.norm_out(hit.target, temb[:-1])
         output = model.proj_out(hidden)
         return output.transpose(1, 2).reshape(x.shape[0], model.out_channels, x.shape[-2], x.shape[-1])
 
 
-class BoundaryPatch:
-    def __init__(self, first):
+class BoundaryForward:
+    def __init__(self, original, first):
+        self.original = original
         self.first = first
 
-    def __call__(self, args, extra):
-        frame = args["transformer_options"].get(FRAME)
-        if frame is None or not frame.active:
-            return extra["original_block"](args)
+    def __call__(self, x, mod, pe, attn_fn, prefix_len, transformer_options=None):
+        options = transformer_options if transformer_options is not None else {}
+        frame = options.get(FRAME)
+        # Core fills the reference/text KV separately. Never cache or skip that pass.
+        if frame is None or not frame.active or x.shape[1] - prefix_len != frame.target_tokens:
+            return self.original(x, mod, pe, attn_fn, prefix_len, options)
         cache = frame.runtime
         if self.first:
             with prefetch.pause_malloc_graph():
-                before = cache.sample(args["img"][:, -frame.target_tokens:])
-            out = extra["original_block"](args)
+                before = cache.sample(x[:, -frame.target_tokens:])
+            out = self.original(x, mod, pe, attn_fn, prefix_len, options)
             with prefetch.pause_malloc_graph():
-                target = out["img"][:, -frame.target_tokens:]
+                target = out[:, -frame.target_tokens:]
                 frame.indicator = cache.sample(target) - before
                 replay, _ = cache.replay(frame.stream, frame.indicator, frame.sigma, target)
                 if replay is not None:
                     cache.full -= 1
-                    raise CacheHit(replay, args["vec"])
+                    raise CacheHit(replay)
                 if target.numel() * target.element_size() > cache.budget:
                     frame.active = False
                     frame.stream.clear()
                 else:
-                    frame.anchor = cache.copy(target)
+                    frame.anchor = target.detach().clone()
             return out
-        out = extra["original_block"](args)
+        out = self.original(x, mod, pe, attn_fn, prefix_len, options)
         with prefetch.pause_malloc_graph():
-            cache.store(frame.stream, frame.indicator, frame.sigma, out["img"][:, -frame.target_tokens:], frame.anchor)
+            cache.store(frame.stream, frame.indicator, frame.sigma, out[:, -frame.target_tokens:], frame.anchor)
             frame.anchor = None
         return out
 
@@ -188,8 +194,14 @@ def install(model, name, value):
     validate_patches(options, len(model.model.diffusion_model.transformer_blocks))
     cloned.model_options["transformer_options"] = options
     if "block" in config or "spectrum" in config:
-        cloned.set_model_patch_replace(BoundaryPatch(True), "dit", "single_block", 0)
-        cloned.set_model_patch_replace(BoundaryPatch(False), "dit", "single_block", len(model.model.diffusion_model.transformer_blocks) - 1)
+        for index, first in ((0, True), (len(model.model.diffusion_model.transformer_blocks) - 1, False)):
+            path = f"diffusion_model.transformer_blocks.{index}.forward"
+            original = cloned.get_model_object(path)
+            if isinstance(original, BoundaryForward):
+                continue
+            if path in cloned.object_patches:
+                raise ValueError("Qwen Image 2.1 T8 cache conflicts with an external block forward patch")
+            cloned.add_object_patch(path, BoundaryForward(original, first))
     for kind, wrapper in ((patches.WrappersMP.OUTER_SAMPLE, sample_wrapper), (patches.WrappersMP.DIFFUSION_MODEL, diffusion_wrapper)):
         cloned.remove_wrappers_with_key(kind, KEY)
         cloned.add_wrapper_with_key(kind, KEY, wrapper)

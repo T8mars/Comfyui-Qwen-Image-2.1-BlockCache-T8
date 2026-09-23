@@ -1,6 +1,6 @@
 {
   "project": "Comfyui-Qwen-Image-2.1-BlockCache-T8",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "status": "experimental",
   "repository": "https://github.com/T8mars/Comfyui-Qwen-Image-2.1-BlockCache-T8",
   "registry_id": "qwen-image-21-blockcache-t8",
@@ -8,9 +8,9 @@
   "core_baseline": "e638023d54497dbe0579565e5de4bb7076899592",
   "kitchen_baseline": "0.2.35",
   "validation_date": "2026-09-23",
-  "trained_model_validation": "INT8 7B T2I at 512/1024, CFG1 Euler/simple 25 steps; limited prompt/seed coverage",
-  "canvas_validation": ["Qwen21_T8_1024_T2I.json", "Qwen21_T8_1024_Spectrum.json", "Qwen21_T8_1024_Sol.json"],
-  "sol_validation": "serial 1024 INT8 25-step API and canvas passed with core compiler disabled and extra VRAM headroom; about 4% sampler gain, visible text/detail changes; 2048 restart unresolved; disabled by default",
-  "latest_audit": "50 serial shuffled CPU rounds x 39 tests passed, plus 4 mocked browser cleanup cases; independent agent source cross-review; no GPU rerun after overflow/sigma guards",
+  "trained_model_validation": "INT8 7B T2I at 512/1024 and 1MP portrait editing at 40 steps; conservative edit 34.431s to 24.742s with Core compiler enabled; limited input/seed coverage",
+  "canvas_validation": ["Qwen21_T8_1024_T2I.json", "Qwen21_T8_1024_Spectrum.json", "Qwen21_T8_1024_Sol.json", "Qwen21_T8_1024_Edit.json"],
+  "sol_validation": "1024 T2I about 4% sampler gain with visible detail changes; 1MP edit plus both caches passed with 430 real Sol calls but no extra gain. Core compiler disabled, extra VRAM headroom. 2048 restart unresolved; disabled by default",
+  "latest_audit": "0.1.3 prefix KV coexistence and serial real edit canvas validation; no-skip real-model output pixel-identical to baseline; see BENCHMARKS.md. Historical 50-round audit covered 0.1.2, not this revision.",
   "local_only_documents": ["roadmap.md", "SKILL.md", "research_agent.md"]
 }
