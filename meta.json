@@ -1,6 +1,6 @@
 {
   "project": "Comfyui-Qwen-Image-2.1-BlockCache-T8",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "status": "experimental",
   "repository": "https://github.com/T8mars/Comfyui-Qwen-Image-2.1-BlockCache-T8",
   "registry_id": "qwen-image-21-blockcache-t8",
@@ -12,6 +12,6 @@
   "canvas_validation": ["Qwen21_T8_1024_T2I.json", "Qwen21_T8_1024_Spectrum.json", "Qwen21_T8_1024_Sol.json", "Qwen21_T8_1024_Edit.json", "Qwen21_T8_1024_Hybrid_Edit.json", "Qwen21_T8_1024_Hybrid_NoCache_Edit.json"],
   "sol_validation": "1024 T2I about 4% sampler gain with visible detail changes; 1MP edit plus both caches passed with 430 real Sol calls but no extra gain. Core compiler disabled, extra VRAM headroom. 2048 restart unresolved; disabled by default",
   "latest_audit": "0.1.4 native-progress threshold and attention-route regressions, six serial real edit canvas runs, hybrid workflow promotion without changing sampling settings. Historical 50-round audit covered 0.1.2, not this revision.",
-  "release_notes": "Native-progress two-stage thresholds plus opt-in Sage/Kitchen shape routing. Routing has real serial 1MP edit canvas comparisons: slightly faster than Sage here, not faster than Kitchen alone. Defaults unchanged; staged-threshold performance not benchmarked.",
+  "release_notes": "Documentation update: concise bilingual setup, workflows, settings, and measured limitations. Runtime behavior unchanged.",
   "local_only_documents": ["roadmap.md", "SKILL.md", "research_agent.md"]
 }
