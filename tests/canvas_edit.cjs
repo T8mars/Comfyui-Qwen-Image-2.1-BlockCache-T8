@@ -11,7 +11,7 @@ const {values: args} = parseArgs({options: {
   backend: {type:'string', default:'sage'},
 }});
 const modes = ['baseline','block','spectrum','combined','sol','sol-block','sol-combined'];
-if (!modes.includes(args.mode) || !args.workflow || ![512,1024].includes(+args.size) || !['sage','kitchen'].includes(args.backend)) throw Error('Invalid edit benchmark arguments');
+if (!modes.includes(args.mode) || !args.workflow || ![512,1024].includes(+args.size) || !['sage','kitchen','sage_kitchen'].includes(args.backend)) throw Error('Invalid edit benchmark arguments');
 const root = path.resolve(__dirname,'..');
 const out = path.join(root,'benchmark_results');
 
@@ -54,8 +54,9 @@ const out = path.join(root,'benchmark_results');
       set(block,'residual_diff_threshold',+args.threshold); set(spectrum,'guard_threshold',+args.guard);
       for(const n of [block,spectrum,sol]) n.title=n.type + (n.mode===0?' / ON':' / BYPASS');
       const sage=get('QwenImage21SageAttentionT8'), kitchen=get('ModelAttentionBackend');
-      sage.mode=args.backend==='sage'?0:4; kitchen.mode=args.backend==='kitchen'?0:4;
-      sage.title='T8 Sage'+(sage.mode===0?' / ON':' / BYPASS');
+      sage.mode=args.backend!=='kitchen'?0:4; kitchen.mode=args.backend==='kitchen'?0:4;
+      set(sage,'backend_mode',args.backend==='sage_kitchen'?'sage_kitchen':'sage');
+      sage.title='T8 '+(args.backend==='sage_kitchen'?'Sage + Kitchen':'Sage')+(sage.mode===0?' / ON':' / BYPASS');
       kitchen.title='Official Kitchen'+(kitchen.mode===0?' / ON':' / BYPASS');
       const text=get('TextEncodeQwenImage21'), vae=get('VAELoader');
       vae.connect(0,text,text.findInputSlot('vae'));

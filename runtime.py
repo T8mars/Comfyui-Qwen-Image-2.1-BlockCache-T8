@@ -77,6 +77,8 @@ def sample_wrapper(executor, *args, **kwargs):
             cache.clear()
         if sol:
             logging.info("Qwen Image 2.1 T8 Sol: kernel=%d dense=%d", runtime.stats.get("sol", 0), runtime.stats.get("sol_dense", 0))
+        if config.get("sage") == "sage_kitchen":
+            logging.info("Qwen Image 2.1 T8 dense routes: sage=%d kitchen=%d (Sage may use native masked fallback)", runtime.stats.get("sage", 0), runtime.stats.get("kitchen", 0))
         guider.model_options = original
 
 

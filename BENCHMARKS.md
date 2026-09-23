@@ -125,3 +125,25 @@ node tests/canvas_edit.cjs --workflow workflows/Qwen21_T8_1024_Edit.json --mode 
 ```
 
 The test script fixes the local reference filename to `10A.jpg`, seed 42 and the tested portrait dimensions; it never downloads the photograph. Set up that local test input first. This script also requires the local 8189 service to be reachable and idle, to avoid overlapping the user's normal queue. The exported workflow itself has no such server/filename restriction: upload any reference through LoadImage.
+
+<a id="attention-routing-014"></a>
+
+## Sage / Kitchen routing 0.1.4 / 混合后端试验
+
+2026-09-23, same RTX 4060 Ti 16GB, Core e638023d, Kitchen 0.2.35, INT8 7B, reference image, seed 42, 768×1376 target, encoder resolution 1024, 40 steps, Core compiler enabled. Block/Spectrum/Sol bypassed to isolate attention. All runs imported and re-imported a frontend workflow, clicked Run and saved PNG; strictly serial with model unloading between runs. Sampler times, not whole-prompt times:
+
+| Dense route | Sampler seconds |
+| --- | ---: |
+| Sage | 35.018, 34.742 |
+| Optional `sage_kitchen` | 34.280, 34.286 |
+| Kitchen alone | 34.269 |
+
+Hybrid averaged about 1.7% less time than these two Sage runs, but **did not beat Kitchen alone**. Limited single-image/seed comparisons do not establish a general speedup. The optional mode stays off by default; this is not an additive "Sage gain + Kitchen gain" claim. Two-stage cache thresholds were not enabled in these comparisons.
+
+Hybrid routed 1,312 long unmasked calls to Kitchen and 64 masked calls to the Sage adapter, which used Core's PyTorch mask fallback on this installation. These are adapter-route counts, **not 64 actual Sage kernel calls**. The short/masked path avoids Kitchen's slower masked kernels in an attention-only probe, but native prefix KV caching limits this work to prefill, so the whole-sampling saving versus Kitchen was negligible.
+
+Hybrid versus Sage baseline: SSIM 0.98422, PSNR 34.69 dB; Kitchen versus Sage: SSIM 0.98810, PSNR 37.34 dB. Changing the quantized backend is not pixel-identical; these metrics are not identity or perceptual-quality guarantees. The two Sage runs were pixel-identical. Additional HND conversions tested slower and were not implemented. Production changes use existing Core adapters only: no custom kernel, full-model rewrite, Core source edit, per-step autotuning, or cache-threshold relaxation.
+
+Hybrid + fixed Block `0.03` + Spectrum `0.08` also completed a real canvas run: **25.019 s**, 26 full / 4 cached / 10 predicted, 130.0 MiB peak retained cache. This verifies composition, not an extra hybrid gain over the earlier cache benchmarks: changing attention also changed which method hit. Six full-model canvas runs were performed in total, all serial, with no 2048 or new Sol tests. 58 CPU/static regressions and four browser-cleanup mocks passed; four old canvases and new threshold/backend parameter save/re-import checks passed.
+
+Release preparation adds a workflow regression (59 CPU/static tests total) and promotes the two sampled hybrid configurations to [hybrid + caches](workflows/Qwen21_T8_1024_Hybrid_Edit.json) and [hybrid without skipping](workflows/Qwen21_T8_1024_Hybrid_NoCache_Edit.json). Sampling settings and connections are unchanged; only layout, notes, output prefixes and package metadata were tidied. These templates use fixed thresholds, not a new staged-threshold benchmark. The reference image and private benchmark artifacts are not shipped.

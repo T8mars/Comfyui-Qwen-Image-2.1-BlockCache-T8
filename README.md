@@ -2,7 +2,9 @@
 
 简体中文 | [English](README_EN.md)
 
-面向 **ComfyUI 原生 Qwen-Image-2.1** 的四个独立 MODEL 节点：Block Cache、Spectrum、Sage Attention 和 Sol Attention，版本 `0.1.3`。使用官方模型加载器、文本条件、采样器和 VAE，不使用 Diffusers 包装管道。
+面向 **ComfyUI 原生 Qwen-Image-2.1** 的四个独立 MODEL 节点：Block Cache、Spectrum、Sage Attention 和 Sol Attention，版本 `0.1.4`。使用官方模型加载器、文本条件、采样器和 VAE，不使用 Diffusers 包装管道。
+
+`0.1.4` 新增按原生进度划分的前后两段阈值、可选 Sage/Kitchen 混合调度，以及两份已实测的混合编辑画布。旧工作流默认仍是固定阈值和原 Sage；混合模式未测得超过 Kitchen 单用的收益，不宣传叠加提速。
 
 `0.1.3` 修复图像编辑反向加速：Block/Spectrum 现在保留官方参考图和文本的前缀 KV 缓存，串接 Spectrum 不再压低 Block 的连续命中上限。真实 7B INT8、1MP 人像编辑、40 步画布对照（Core compiler 开启）：Sage 基线 **34.43 秒 → 保守组合 24.74 秒**，约减少 28% 采样时间；Kitchen 基线 **33.56 秒 → 24.54 秒**。编辑示例使用 Block `0.03`、Spectrum `0.08`，而非较激进的文生图默认值。
 
@@ -13,8 +15,12 @@
 - [1024 文生图：Kitchen + Block Cache](workflows/Qwen21_T8_1024_T2I.json)
 - [1024 文生图：Kitchen + Spectrum](workflows/Qwen21_T8_1024_Spectrum.json)
 - [1MP 图像编辑：Sage + 保守 Block/Spectrum](workflows/Qwen21_T8_1024_Edit.json)
+- [新增：1MP 图像编辑：混合后端 + Block/Spectrum](workflows/Qwen21_T8_1024_Hybrid_Edit.json)
+- [新增：1MP 图像编辑：仅混合后端，不跳层](workflows/Qwen21_T8_1024_Hybrid_NoCache_Edit.json)
 
 下载原始 JSON 后拖入 ComfyUI 画布，选择本机模型文件，再点击运行。它们是包含布局和连接的**前端工作流，不是 API JSON**；均已通过真实浏览器前端导入、点击运行和出图验证。紫色节点为旁路，选中后 `Ctrl+B` 切换；Sol 另外保持 `enabled=false`。
+
+两份新增 JSON 均在本仓库的 `workflows` 文件夹，不在测试记录目录。保持实测采样设置，仅整理注释、布局及输出文件名前缀；混合组合示例仍用固定阈值 `constant`，需分段时手动选择 `two_stage`。上传自己的参考图，照片不随包分发。
 
 另有 [1024 Sol 实验工作流](workflows/Qwen21_T8_1024_Sol.json)，已实际画布运行 25 步。关闭 Core compiler、增加显存预留后，串行对照 Kitchen 平均 16.61秒 → Sol 15.96秒，约快 4%；但出现额外乱码小字及壶盖细节改变。此图明确开启 Sol（`enabled=true, min_tokens=4096`），不是默认推荐配置；[完整条件与限制](BENCHMARKS.md#serial-1024-sol-follow-up--1024-串行复测)。不能据此认定 2048 安全。
 
@@ -70,6 +76,35 @@ Block Cache 与 T8 Spectrum 可各自使用，也可前后串接：Block Cache �
 
 ## Qwen2.1 专用设计和边界
 
+### Sage / Kitchen 混合调度（0.1.4）
+
+现有 Sage 节点新增可选 `backend_mode=sage_kitchen`：无 mask、至少1024个 query tokens、head_dim=128 的低精度 CUDA 注意力使用官方 Kitchen，其余保持 Sage 的原生适配路径；不支持 Kitchen 时回到 Sage。默认 `sage` 不改变旧工作流。混合模式不需要再串接官方 Kitchen 选择节点，仍可在后面连接 Block/Spectrum。
+
+这是按调用形状分工，不是同一次 Attention 跑两遍，也不放宽跳层阈值。短文本/带 mask 调用由 Sage 适配器处理，当前 Sage 不支持的 mask 会按 Core 原有规则回退 PyTorch；终端 `dense routes` 统计的是适配器路由次数，不代表全部执行了 Sage kernel。Core 已有的 Kitchen RMS/RoPE、AdaLN、SwiGLU 融合仍然保留。
+
+这是实验选项，不保证比 Kitchen 单用更快。切换量化后端可能改变图像，不能保证同 seed 像素一致；两种后端本身的收益不能相加。
+
+本机1MP编辑、40步真实画布对照：Sage `35.018/34.742秒`，混合 `34.280/34.286秒`，Kitchen单用 `34.269秒`。混合只比该组Sage平均快约1.7%，没有超过Kitchen；与Block/Spectrum联用也已出图。详见[实测条件与限制](BENCHMARKS.md#attention-routing-014)。
+
+### 两段阈值（0.1.4）
+
+Block Cache 和 Spectrum 都支持 `threshold_mode=two_stage`。**所有边界均按原生采样进度，通过 `percent_to_sigma` 转换，不按步数或模型调用次数计数。** 原阈值分别作为前段阈值，新增 `late_threshold` 作为后段阈值，`split_ratio` 表示允许跳层区间内的前段占比。
+
+```text
+切换进度 = start_percent + (end_percent - start_percent) × split_ratio
+```
+
+例如两节点均设置 start=`0.15`、end=`0.85`、split_ratio=`0.5`：进度 `<0.15` 完整计算；`0.15≤进度<0.50` 使用各自原阈值；`0.50≤进度<0.85` 使用各自后段阈值；`≥0.85` 完整计算。比例改成 `0.3`，切换点就是 `0.36`，不是全程的30%。这不保证每段实际命中多少次，历史数量、变化检查和连续命中上限仍生效。
+
+- Block 前段使用 `residual_diff_threshold`，后段使用 `late_threshold`。
+- Spectrum 前段使用 `guard_threshold`，后段使用 `late_threshold`。
+- 两节点可分别设置区间、比例和阈值；如果希望整个组合的首尾都完整计算，应让两节点首尾区间一致。把某一节点后段阈值设为0，只关闭该节点的后段跳层，另一个仍可能命中。
+- `split_ratio=0` 全区间用后段阈值，`1` 全区间用前段阈值。默认 `constant` 忽略分段参数，保持旧工作流行为；新输入追加在原参数后，重启后重新载入旧画布即可出现。
+
+分段功能经过 CPU 小模型和前端导入/保存/提示图参数检查；0.1.3 和 0.1.4 的真实大模型速度属于固定阈值测试，不作为两段配置的新性能结论。
+
+### 模型边界
+
 - 只识别原生 `QwenImage21Transformer2DModel`。不把旧 Qwen-Image、2512、H3 当成同一模型。
 - Qwen2.1 是 32 层单流结构，只缓存目标图像 tail residual；文本/参考图不会作为待重建输出缓存。完整步仍走官方融合 RMS/RoPE、AdaLN、SwiGLU、量化线性层和 offload。
 - 缓存仅属于一次采样，按条件 UUID、CFG 分支、shape、dtype、device、参考图布局区分。未知 UUID/sigma 不复用；sigma 重复或反向时刷新。正常完成、异常或取消均释放缓存。
@@ -83,6 +118,8 @@ Block Cache 与 T8 Spectrum 可各自使用，也可前后串接：Block Cache �
 终端汇总：`full=N cache=N spectrum=N peak cache=N MiB`；Sol 汇总：`kernel=N dense=N`。`kernel=0` 就没有调用 Sol kernel，不把回退称为加速。
 
 ## 验证
+
+0.1.4：59 项 CPU/静态测试、4 项浏览器生命周期模拟通过，覆盖进度分段、后端路由及两份发布工作流；6次真实图像编辑画布测试全部串行完成。两份混合示例使用已出图的采样配置，未宣传两段阈值的新速度结果。
 
 ```powershell
 python -m unittest discover -s tests -v

@@ -2,7 +2,9 @@
 
 [简体中文](README.md) | English
 
-Four independent MODEL nodes for **native ComfyUI Qwen-Image-2.1**: Block Cache, Spectrum, Sage Attention and Sol Attention, experimental version `0.1.3`. Keep the official loader, text conditioning, sampler, and VAE. No Diffusers wrapper is introduced.
+Four independent MODEL nodes for **native ComfyUI Qwen-Image-2.1**: Block Cache, Spectrum, Sage Attention and Sol Attention, experimental version `0.1.4`. Keep the official loader, text conditioning, sampler, and VAE. No Diffusers wrapper is introduced.
+
+`0.1.4` adds native-progress early/late thresholds, optional Sage/Kitchen routing, and two tested hybrid edit canvases. Old workflows retain fixed thresholds and plain Sage by default. Hybrid has not beaten Kitchen alone in the measured case; additive speedups are not claimed.
 
 `0.1.3` fixes the image-edit slowdown: Block/Spectrum now preserve Core's reference/text prefix KV cache, and adding Spectrum no longer lowers Block's consecutive-hit limit. A real 7B INT8, 1MP portrait edit completed 40 steps from the browser canvas with Core compilation enabled: **34.43 s Sage baseline → 24.74 s conservative combined**, about 28% less sampler time; **33.56 s Kitchen baseline → 24.54 s combined**. The edit example uses Block `0.03` and Spectrum `0.08`, instead of the more aggressive T2I defaults.
 
@@ -13,8 +15,12 @@ Coverage is still limited to a few inputs/seeds, and approximate skipping change
 - [1024 T2I: Kitchen + Block Cache](workflows/Qwen21_T8_1024_T2I.json)
 - [1024 T2I: Kitchen + Spectrum](workflows/Qwen21_T8_1024_Spectrum.json)
 - [1MP image edit: Sage + conservative Block/Spectrum](workflows/Qwen21_T8_1024_Edit.json)
+- [New: 1MP image edit: hybrid + Block/Spectrum](workflows/Qwen21_T8_1024_Hybrid_Edit.json)
+- [New: 1MP image edit: hybrid only, no skipped blocks](workflows/Qwen21_T8_1024_Hybrid_NoCache_Edit.json)
 
-Download the raw JSON, drop it onto ComfyUI, select your local model filenames, and click Run. These are **frontend workflows with layouts and links, not API JSON**. All three were imported and executed by clicking Run in the real browser frontend, completing PNG output. Purple nodes are bypassed; select and press `Ctrl+B` to toggle. Leave Sol's separate `enabled=false` control off.
+Download the raw JSON, drop it onto ComfyUI, select your local model filenames, and click Run. These are **frontend workflows with layouts and links, not API JSON**. All listed configurations were imported and executed by clicking Run in the real browser frontend, completing PNG output. Purple nodes are bypassed; select and press `Ctrl+B` to toggle. Leave Sol's separate `enabled=false` control off.
+
+Both new files are in the repository's `workflows` directory. Their sampled settings are unchanged; only notes, layout, output prefixes and package metadata were tidied. The hybrid combination uses `constant` thresholds; select `two_stage` manually to use progress-based stages. Select your own reference photo; it is not distributed.
 
 An additional [experimental 1024 Sol workflow](workflows/Qwen21_T8_1024_Sol.json) completed 25 steps from the real canvas. With Core compilation disabled and extra VRAM headroom, serial comparisons averaged 16.61 s for Kitchen versus 15.96 s for Sol (about 4% less sampler time), but introduced garbled small text and changed lid details. This file explicitly enables Sol (`enabled=true, min_tokens=4096`); it is not the recommended default. See [full conditions and limits](BENCHMARKS.md#serial-1024-sol-follow-up--1024-串行复测). This does not establish 2048 safety.
 
@@ -70,6 +76,34 @@ Higher cache thresholds or Sol tau are more aggressive and may alter quality. Sm
 
 ## Qwen-specific behavior and limits
 
+### Sage / Kitchen routing (0.1.4)
+
+The existing Sage node adds optional `backend_mode=sage_kitchen`: unmasked low-precision CUDA attention with at least 1024 query tokens and head dimension 128 uses Core's Kitchen adapter; other calls keep the native Sage path. Unavailable Kitchen falls back to Sage. The default `sage` preserves old workflows. Bypass the separate official Kitchen selector when using this mode; Block/Spectrum can still follow it.
+
+This routes distinct calls rather than running the same attention twice, and does not relax cache thresholds. Sage's adapter may fall back to PyTorch for unsupported masks, so the `dense routes` log counts adapter routes, not guaranteed Sage kernel invocations. Core's existing Kitchen RMS/RoPE, AdaLN and SwiGLU fusion remains in use.
+
+This is experimental, not a guarantee of beating Kitchen alone. Switching quantized attention backends can change the image; identical pixels and additive speedups are not promised.
+
+Serial real-canvas 1MP edit, 40 steps: Sage `35.018/34.742 s`, hybrid `34.280/34.286 s`, Kitchen alone `34.269 s`. Hybrid was about 1.7% faster than the mean of those Sage runs but did not beat Kitchen. A hybrid + Block/Spectrum canvas run also completed. See [conditions and limitations](BENCHMARKS.md#attention-routing-014).
+
+### Two-stage thresholds (0.1.4)
+
+Both Block Cache and Spectrum support `threshold_mode=two_stage`. **All boundaries use native sampling progress converted through `percent_to_sigma`, never step or model-call counters.** The existing threshold becomes the early threshold. `late_threshold` controls the late stage; `split_ratio` is the early share of the active progress window.
+
+```text
+switch_progress = start_percent + (end_percent - start_percent) * split_ratio
+```
+
+With both nodes set to start=`0.15`, end=`0.85`, split=`0.5`: before 0.15 compute fully; `[0.15, 0.50)` uses each node's original threshold; `[0.50, 0.85)` uses its late threshold; from 0.85 compute fully. A split ratio of `0.3` switches at `0.36`, not 30% of the whole run. History requirements, change guards, and consecutive limits still apply; stages do not guarantee a number of hits.
+
+- Block uses `residual_diff_threshold` early and `late_threshold` late; Spectrum uses `guard_threshold` early and `late_threshold` late.
+- Each node has independent boundaries and thresholds. Align both active windows if the whole combination must compute the same initial/final regions fully. Setting one late threshold to zero disables only that node's late skipping; the other may still hit.
+- Split `0` uses the late threshold throughout the active window; `1` uses the early threshold throughout. Default `constant` ignores staged controls and preserves old behavior. New optional inputs are appended; restart and reload an existing workflow to see them.
+
+The staged feature has CPU tiny-model and real frontend import/save/prompt-parameter checks. Published 0.1.3 full-model speed figures below are for constant thresholds, not a new benchmark of staged presets.
+
+### Model boundaries
+
 - Requires `QwenImage21Transformer2DModel`; old Qwen-Image, 2512, and H3 are different architectures.
 - Target-only residual storage; full forwards retain native fused RMS/RoPE, AdaLN, SwiGLU, quantized operations, and offload.
 - State exists only inside one sampling call. UUID/CFG, geometry, dtype/device, and reference layout separate streams. Missing identity/sigma prevents reuse; repeated/reversed sigma refreshes history. Completion, failure, and cancellation release state.
@@ -83,6 +117,8 @@ Higher cache thresholds or Sol tau are more aggressive and may alter quality. Sm
 Logs report `full=N cache=N spectrum=N peak cache=N MiB` and `Sol: kernel=N dense=N`. Zero kernel calls mean Sol was not used.
 
 ## Validation
+
+0.1.4: 59 CPU/static tests and four browser-cleanup mocks passed, covering progress stages, attention routing and the two published hybrid canvases. Six real edit canvas runs completed strictly serially. The new workflows retain sampled configurations; no new speed claim is made for staged thresholds.
 
 ```powershell
 python -m unittest discover -s tests -v

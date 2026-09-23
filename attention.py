@@ -38,6 +38,13 @@ def make_override(model, previous, sage, sol, target_tokens, total_tokens, progr
 
         def dense():
             if sage and q.device.type == "cuda" and q.dtype in (torch.float16, torch.bfloat16) and not any(t.requires_grad for t in (q, k, v)):
+                q_len = q.shape[2] if skip_reshape else q.shape[1]
+                dim = q.shape[-1] if skip_reshape else q.shape[-1] // heads
+                if (sage == "sage_kitchen" and mask is None and q_len >= 1024 and dim == 128
+                        and kwargs.get("low_precision_attention", True)
+                        and ck.int8_attention_is_available(q.device)):
+                    stats["kitchen"] = stats.get("kitchen", 0) + 1
+                    return native_attention.attention_comfy_kitchen_int8(q, k, v, heads, **common)
                 stats["sage"] = stats.get("sage", 0) + 1
                 return native_attention.attention_sage(q, k, v, heads, **common)
             if previous is not None:

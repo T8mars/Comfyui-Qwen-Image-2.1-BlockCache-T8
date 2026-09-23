@@ -16,6 +16,9 @@ class CacheConfig:
     cache_device: str = "cpu"
     metric_stride: int = 8
     max_cache_mb: int = 1024
+    threshold_mode: str = "constant"
+    split_ratio: float = 0.5
+    late_threshold: float = 0.03
 
 
 @dataclass(frozen=True)
@@ -29,6 +32,9 @@ class SpectrumConfig:
     max_consecutive_hits: int = 1
     cache_device: str = "cpu"
     max_cache_mb: int = 1024
+    threshold_mode: str = "constant"
+    split_ratio: float = 0.5
+    late_threshold: float = 0.08
 
 
 @dataclass
@@ -76,6 +82,8 @@ class CacheRuntime:
         self.spectrum = spectrum
         configs = [c for c in (block, spectrum) if c is not None]
         self.windows = {id(c): (float(model_sampling.percent_to_sigma(c.start_percent)), float(model_sampling.percent_to_sigma(c.end_percent))) for c in configs}
+        self.splits = {id(c): float(model_sampling.percent_to_sigma(c.start_percent + (c.end_percent - c.start_percent) * c.split_ratio))
+                       for c in configs if c.threshold_mode == "two_stage"}
         self.device = "cpu" if any(c.cache_device == "cpu" for c in configs) else "gpu"
         self.budget = min(c.max_cache_mb for c in configs) * 1024 * 1024
         self.stride = block.metric_stride if block else 8
@@ -94,6 +102,10 @@ class CacheRuntime:
     def window(self, config, sigma):
         start, end = self.windows[id(config)]
         return end < sigma <= start
+
+    def threshold(self, config, sigma, early):
+        split = self.splits.get(id(config))
+        return config.late_threshold if split is not None and sigma <= split else early
 
     def stream(self, key, sigma):
         stream = self.streams.pop(key, Stream())
@@ -115,7 +127,7 @@ class CacheRuntime:
         score = self.difference(indicator, stream.indicator)
         if not math.isfinite(score):
             return None, None
-        if self.block and stream.consecutive < self.block.max_consecutive_hits and self.window(self.block, sigma) and score < self.block.threshold:
+        if self.block and stream.consecutive < self.block.max_consecutive_hits and self.window(self.block, sigma) and score < self.threshold(self.block, sigma, self.block.threshold):
             result = target + stream.history[-1][1].to(target)
             if not torch.isfinite(result).all():
                 return None, None
@@ -123,7 +135,7 @@ class CacheRuntime:
             stream.consecutive += 1
             return result, "cache"
         config = self.spectrum
-        if config and stream.consecutive < config.max_consecutive_hits and self.window(config, sigma) and score < config.guard_threshold and len(stream.history) >= config.history:
+        if config and stream.consecutive < config.max_consecutive_hits and self.window(config, sigma) and score < self.threshold(config, sigma, config.guard_threshold) and len(stream.history) >= config.history:
             weights = forecast_weights([s for s, _ in stream.history], sigma, config.degree, config.ridge)
             if weights is not None:
                 result = target.clone()

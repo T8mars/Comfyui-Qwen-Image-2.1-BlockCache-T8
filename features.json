@@ -4,6 +4,7 @@
   "tested": ["cpu_static_and_native_tiny_model_regressions", "historical_0_1_2_50_serial_cpu_rounds", "4_mocked_browser_cleanup_cases", "compiled_sol_bf16_fp16_small_tensor", "native_sage_kitchen_rectangular_and_masked_cuda", "int8_7b_t2i_512_1024", "int8_7b_single_reference_edit_40_steps", "edit_with_core_compiler_enabled", "real_no_skip_pixel_equivalence", "dynamic_vram_full_sampling", "canvas_json_import_click_run_png", "whitelist_cpu_cold_start", "comfy_node_validate"],
   "pending": ["broad_prompt_seed_quality", "multiple_reference_edit", "other_quantization_formats", "multi_gpu_validation"],
   "registry_publication": "GitHub Actions workflow; check Registry for live version/review status",
+  "release_0_1_4": ["two_stage_thresholds_by_native_progress", "independent_early_late_thresholds_and_split_ratios", "old_canvas_widget_compatibility_verified", "opt_in_sage_kitchen_shape_routing_not_additive_speedup", "two_tested_hybrid_edit_canvas_workflows"],
   "suspended": ["large_image_sol_after_system_restart"],
   "test_policy": "strictly serial; shared benchmark lock; no 2048 stress tests"
 }

@@ -1,6 +1,6 @@
 [project]
 name = "qwen-image-21-blockcache-t8"
-version = "0.1.3"
+version = "0.1.4"
 description = "Experimental native Qwen-Image-2.1 block cache, spectral forecasting, and attention adapters."
 license = { text = "Apache-2.0" }
 requires-python = ">=3.10"

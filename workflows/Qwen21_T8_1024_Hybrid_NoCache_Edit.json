@@ -1,0 +1,1482 @@
+{
+  "id": "f80185cf-f3d9-433b-a3ab-aede678ec63e",
+  "revision": 0,
+  "last_node_id": 16,
+  "last_link_id": 19,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "UNETLoader",
+      "pos": [
+        30,
+        60
+      ],
+      "size": [
+        270,
+        82
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "UNet名称",
+          "name": "unet_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "unet_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "数据类型",
+          "name": "weight_dtype",
+          "type": "COMBO",
+          "widget": {
+            "name": "weight_dtype"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "模型",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            2
+          ]
+        }
+      ],
+      "title": "01 / Official Qwen 2.1 model",
+      "properties": {
+        "Node name for S&R": "UNETLoader",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
+      },
+      "widgets_values": [
+        "qwen_image_2.1_int8_convrot.safetensors",
+        "default"
+      ],
+      "widgets_values_named": {
+        "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    {
+      "id": 2,
+      "type": "CLIPLoader",
+      "pos": [
+        30,
+        270
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "CLIP名称",
+          "name": "clip_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "clip_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "类型",
+          "name": "type",
+          "type": "COMBO",
+          "widget": {
+            "name": "type"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "设备",
+          "name": "device",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "device"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "CLIP",
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            1
+          ]
+        }
+      ],
+      "title": "02 / Qwen3-VL 8B text encoder",
+      "properties": {
+        "Node name for S&R": "CLIPLoader",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
+      },
+      "widgets_values": [
+        "qwen3vl_8b_fp8_scaled.safetensors",
+        "qwen_image",
+        "default"
+      ],
+      "widgets_values_named": {
+        "clip_name": "qwen3vl_8b_fp8_scaled.safetensors",
+        "type": "qwen_image",
+        "device": "default"
+      }
+    },
+    {
+      "id": 3,
+      "type": "VAELoader",
+      "pos": [
+        30,
+        470
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "vae名称",
+          "name": "vae_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "vae_name"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "VAE",
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            12,
+            19
+          ]
+        }
+      ],
+      "title": "03 / Official Qwen 2.1 VAE",
+      "properties": {
+        "Node name for S&R": "VAELoader",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
+      },
+      "widgets_values": [
+        "qwen_image_2.1_vae_bf16.safetensors"
+      ],
+      "widgets_values_named": {
+        "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+      }
+    },
+    {
+      "id": 4,
+      "type": "TextEncodeQwenImage21",
+      "pos": [
+        830,
+        550
+      ],
+      "size": [
+        390,
+        390
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "clip",
+          "name": "clip",
+          "type": "CLIP",
+          "link": 1
+        },
+        {
+          "label": "参考图 1 (Image-1)",
+          "localized_name": "image_1",
+          "name": "images.image_1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 17
+        },
+        {
+          "localized_name": "image_2",
+          "name": "images.image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "localized_name": "image_3",
+          "name": "images.image_3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "shape": 7,
+          "type": "VAE",
+          "link": 19
+        },
+        {
+          "localized_name": "prompt",
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "negative_prompt",
+          "name": "negative_prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "negative_prompt"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "resolution",
+          "name": "resolution",
+          "type": "INT",
+          "widget": {
+            "name": "resolution"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "positive",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            8
+          ]
+        },
+        {
+          "localized_name": "negative",
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": [
+            9
+          ]
+        },
+        {
+          "localized_name": "latent",
+          "name": "latent",
+          "type": "LATENT",
+          "links": []
+        }
+      ],
+      "title": "04 / Prompt + resolution / official",
+      "properties": {
+        "Node name for S&R": "TextEncodeQwenImage21",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
+      },
+      "widgets_values": [
+        "女人吃苹果",
+        "",
+        1024
+      ],
+      "widgets_values_named": {
+        "prompt": "女人吃苹果",
+        "negative_prompt": "",
+        "resolution": 1024
+      }
+    },
+    {
+      "id": 5,
+      "type": "ModelAttentionBackend",
+      "pos": [
+        430,
+        60
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 4,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 2
+        },
+        {
+          "localized_name": "attention",
+          "name": "attention",
+          "type": "COMBO",
+          "widget": {
+            "name": "attention"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "模型",
+          "name": "model",
+          "type": "MODEL",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "title": "Official Kitchen / BYPASS",
+      "properties": {
+        "Node name for S&R": "ModelAttentionBackend",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
+      },
+      "widgets_values": [
+        "comfy kitchen attention"
+      ],
+      "widgets_values_named": {
+        "attention": "comfy kitchen attention"
+      }
+    },
+    {
+      "id": 6,
+      "type": "QwenImage21SageAttentionT8",
+      "pos": [
+        430,
+        210
+      ],
+      "size": [
+        276.601171875,
+        58
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 3
+        },
+        {
+          "localized_name": "backend_mode",
+          "name": "backend_mode",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "backend_mode"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "模型",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            4
+          ]
+        }
+      ],
+      "title": "T8 Sage + Kitchen / ON",
+      "properties": {
+        "Node name for S&R": "QwenImage21SageAttentionT8",
+        "cnr_id": "qwen-image-21-blockcache-t8",
+        "ver": "0.1.4"
+      },
+      "widgets_values": [
+        "sage_kitchen"
+      ],
+      "widgets_values_named": {
+        "backend_mode": "sage_kitchen"
+      }
+    },
+    {
+      "id": 7,
+      "type": "QwenImage21SolAttentionT8",
+      "pos": [
+        430,
+        340
+      ],
+      "size": [
+        323.776953125,
+        154
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 4,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 4
+        },
+        {
+          "localized_name": "tau",
+          "name": "tau",
+          "type": "FLOAT",
+          "widget": {
+            "name": "tau"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "min_tokens",
+          "name": "min_tokens",
+          "type": "INT",
+          "widget": {
+            "name": "min_tokens"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "start_percent",
+          "name": "start_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "start_percent"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "end_percent",
+          "name": "end_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "end_percent"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "enabled",
+          "name": "enabled",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "enabled"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "模型",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            5
+          ]
+        }
+      ],
+      "title": "QwenImage21SolAttentionT8 / BYPASS",
+      "properties": {
+        "Node name for S&R": "QwenImage21SolAttentionT8",
+        "cnr_id": "qwen-image-21-blockcache-t8",
+        "ver": "0.1.4"
+      },
+      "widgets_values": [
+        1,
+        4096,
+        0.15,
+        0.85,
+        false
+      ],
+      "widgets_values_named": {
+        "tau": 1,
+        "min_tokens": 4096,
+        "start_percent": 0.15,
+        "end_percent": 0.85,
+        "enabled": false
+      }
+    },
+    {
+      "id": 8,
+      "type": "QwenImage21BlockCacheT8",
+      "pos": [
+        430,
+        660
+      ],
+      "size": [
+        322.683203125,
+        274
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 4,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 5
+        },
+        {
+          "localized_name": "residual_diff_threshold",
+          "name": "residual_diff_threshold",
+          "type": "FLOAT",
+          "widget": {
+            "name": "residual_diff_threshold"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "start_percent",
+          "name": "start_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "start_percent"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "end_percent",
+          "name": "end_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "end_percent"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "max_consecutive_hits",
+          "name": "max_consecutive_hits",
+          "type": "INT",
+          "widget": {
+            "name": "max_consecutive_hits"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "cache_device",
+          "name": "cache_device",
+          "type": "COMBO",
+          "widget": {
+            "name": "cache_device"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "metric_stride",
+          "name": "metric_stride",
+          "type": "INT",
+          "widget": {
+            "name": "metric_stride"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "max_cache_mb",
+          "name": "max_cache_mb",
+          "type": "INT",
+          "widget": {
+            "name": "max_cache_mb"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "threshold_mode",
+          "name": "threshold_mode",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "threshold_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "split_ratio",
+          "name": "split_ratio",
+          "shape": 7,
+          "type": "FLOAT",
+          "widget": {
+            "name": "split_ratio"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "late_threshold",
+          "name": "late_threshold",
+          "shape": 7,
+          "type": "FLOAT",
+          "widget": {
+            "name": "late_threshold"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "模型",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            6
+          ]
+        }
+      ],
+      "title": "QwenImage21BlockCacheT8 / BYPASS",
+      "properties": {
+        "Node name for S&R": "QwenImage21BlockCacheT8",
+        "cnr_id": "qwen-image-21-blockcache-t8",
+        "ver": "0.1.4"
+      },
+      "widgets_values": [
+        0.08,
+        0.1,
+        0.85,
+        2,
+        "cpu",
+        8,
+        1024,
+        "constant",
+        0.5,
+        0.03
+      ],
+      "widgets_values_named": {
+        "residual_diff_threshold": 0.08,
+        "start_percent": 0.1,
+        "end_percent": 0.85,
+        "max_consecutive_hits": 2,
+        "cache_device": "cpu",
+        "metric_stride": 8,
+        "max_cache_mb": 1024,
+        "threshold_mode": "constant",
+        "split_ratio": 0.5,
+        "late_threshold": 0.03
+      }
+    },
+    {
+      "id": 9,
+      "type": "QwenImage21SpectrumT8",
+      "pos": [
+        830,
+        60
+      ],
+      "size": [
+        303.6998046875,
+        322
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 4,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 6
+        },
+        {
+          "localized_name": "history",
+          "name": "history",
+          "type": "INT",
+          "widget": {
+            "name": "history"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "degree",
+          "name": "degree",
+          "type": "INT",
+          "widget": {
+            "name": "degree"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "ridge",
+          "name": "ridge",
+          "type": "FLOAT",
+          "widget": {
+            "name": "ridge"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "guard_threshold",
+          "name": "guard_threshold",
+          "type": "FLOAT",
+          "widget": {
+            "name": "guard_threshold"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "start_percent",
+          "name": "start_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "start_percent"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "end_percent",
+          "name": "end_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "end_percent"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "max_consecutive_hits",
+          "name": "max_consecutive_hits",
+          "type": "INT",
+          "widget": {
+            "name": "max_consecutive_hits"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "cache_device",
+          "name": "cache_device",
+          "type": "COMBO",
+          "widget": {
+            "name": "cache_device"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "max_cache_mb",
+          "name": "max_cache_mb",
+          "type": "INT",
+          "widget": {
+            "name": "max_cache_mb"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "threshold_mode",
+          "name": "threshold_mode",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "threshold_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "split_ratio",
+          "name": "split_ratio",
+          "shape": 7,
+          "type": "FLOAT",
+          "widget": {
+            "name": "split_ratio"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "late_threshold",
+          "name": "late_threshold",
+          "shape": 7,
+          "type": "FLOAT",
+          "widget": {
+            "name": "late_threshold"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "模型",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            7
+          ]
+        }
+      ],
+      "title": "QwenImage21SpectrumT8 / BYPASS",
+      "properties": {
+        "Node name for S&R": "QwenImage21SpectrumT8",
+        "cnr_id": "qwen-image-21-blockcache-t8",
+        "ver": "0.1.4"
+      },
+      "widgets_values": [
+        4,
+        2,
+        0.01,
+        0.25,
+        0.15,
+        0.85,
+        1,
+        "cpu",
+        1024,
+        "constant",
+        0.5,
+        0.08
+      ],
+      "widgets_values_named": {
+        "history": 4,
+        "degree": 2,
+        "ridge": 0.01,
+        "guard_threshold": 0.25,
+        "start_percent": 0.15,
+        "end_percent": 0.85,
+        "max_consecutive_hits": 1,
+        "cache_device": "cpu",
+        "max_cache_mb": 1024,
+        "threshold_mode": "constant",
+        "split_ratio": 0.5,
+        "late_threshold": 0.08
+      }
+    },
+    {
+      "id": 10,
+      "type": "KSampler",
+      "pos": [
+        1270,
+        60
+      ],
+      "size": [
+        270,
+        474.00000000000006
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "模型",
+          "name": "model",
+          "type": "MODEL",
+          "link": 7
+        },
+        {
+          "localized_name": "正面条件",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 8
+        },
+        {
+          "localized_name": "负面条件",
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 9
+        },
+        {
+          "localized_name": "Latent图像",
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 16
+        },
+        {
+          "localized_name": "种子",
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "步数",
+          "name": "steps",
+          "type": "INT",
+          "widget": {
+            "name": "steps"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "cfg",
+          "name": "cfg",
+          "type": "FLOAT",
+          "widget": {
+            "name": "cfg"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "采样器名称",
+          "name": "sampler_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "sampler_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "调度器",
+          "name": "scheduler",
+          "type": "COMBO",
+          "widget": {
+            "name": "scheduler"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "降噪",
+          "name": "denoise",
+          "type": "FLOAT",
+          "widget": {
+            "name": "denoise"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "Latent",
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            11
+          ]
+        }
+      ],
+      "title": "10 / Native sampler / fixed seed",
+      "properties": {
+        "Node name for S&R": "KSampler",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
+      },
+      "widgets_values": [
+        42,
+        "fixed",
+        40,
+        1,
+        "euler",
+        "simple",
+        1
+      ],
+      "widgets_values_named": {
+        "seed": 42,
+        "control_after_generate": "fixed",
+        "steps": 40,
+        "cfg": 1,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "denoise": 1
+      }
+    },
+    {
+      "id": 11,
+      "type": "VAEDecode",
+      "pos": [
+        1270,
+        500
+      ],
+      "size": [
+        192.4481414794922,
+        46
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "Latent",
+          "name": "samples",
+          "type": "LATENT",
+          "link": 11
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "type": "VAE",
+          "link": 12
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "图像",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            13
+          ]
+        }
+      ],
+      "title": "11 / Native VAE decode",
+      "properties": {
+        "Node name for S&R": "VAEDecode",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
+      }
+    },
+    {
+      "id": 12,
+      "type": "SaveImage",
+      "pos": [
+        1670,
+        60
+      ],
+      "size": [
+        460,
+        640
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "图片",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 13
+        },
+        {
+          "localized_name": "文件名前缀",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": {
+            "name": "filename_prefix"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "title": "12 / Output (drag PNG back to restore)",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0",
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "Qwen21_T8_Hybrid_NoCache_Edit"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "Qwen21_T8_Hybrid_NoCache_Edit"
+      }
+    },
+    {
+      "id": 13,
+      "type": "Note",
+      "pos": [
+        1270,
+        750
+      ],
+      "size": [
+        540,
+        420
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "READ ME / 使用说明",
+      "properties": {
+        "Node name for S&R": "Note"
+      },
+      "widgets_values": [
+        "Qwen 2.1 图像编辑 / Image edit — Sage + Kitchen hybrid\n参考 IMAGE 和 VAE 均须连接编码器。请选择自己的参考图；10A.jpg 不随插件分发。\nSeed 42 / 40 steps / encoder 1024 / target 768×1376.\nSage backend_mode=sage_kitchen；官方 Kitchen 选择节点与 Sol 已旁路。\nBlock/Spectrum 已旁路：仅混合后端，不跳层。\n两段阈值可选 two_stage：按原生进度，不按步数；split_ratio 控制区间内前段比例，late_threshold 为后段阈值。\n混合模式未测得超过 Kitchen 单用的收益，不保证加速叠加。近似计算会改变细节。\n保持参考图比例时，可用编码器 LATENT 输出替换当前竖图 LATENT。请严格串行运行。"
+      ],
+      "widgets_values_named": {
+        "text": "Qwen 2.1 图像编辑 / Image edit — Sage + Kitchen hybrid\n参考 IMAGE 和 VAE 均须连接编码器。请选择自己的参考图；10A.jpg 不随插件分发。\nSeed 42 / 40 steps / encoder 1024 / target 768×1376.\nSage backend_mode=sage_kitchen；官方 Kitchen 选择节点与 Sol 已旁路。\nBlock/Spectrum 已旁路：仅混合后端，不跳层。\n两段阈值可选 two_stage：按原生进度，不按步数；split_ratio 控制区间内前段比例，late_threshold 为后段阈值。\n混合模式未测得超过 Kitchen 单用的收益，不保证加速叠加。近似计算会改变细节。\n保持参考图比例时，可用编码器 LATENT 输出替换当前竖图 LATENT。请严格串行运行。"
+      },
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 14,
+      "type": "EmptyLatentImage",
+      "pos": [
+        830,
+        1280
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "宽度",
+          "name": "width",
+          "type": "INT",
+          "widget": {
+            "name": "width"
+          },
+          "link": 14
+        },
+        {
+          "localized_name": "高度",
+          "name": "height",
+          "type": "INT",
+          "widget": {
+            "name": "height"
+          },
+          "link": 15
+        },
+        {
+          "localized_name": "批量大小",
+          "name": "batch_size",
+          "type": "INT",
+          "widget": {
+            "name": "batch_size"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "Latent",
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            16
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "EmptyLatentImage",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
+      },
+      "widgets_values": [
+        1024,
+        1024,
+        1
+      ],
+      "widgets_values_named": {
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1
+      }
+    },
+    {
+      "id": 15,
+      "type": "ResolutionSelector",
+      "pos": [
+        830,
+        1040
+      ],
+      "size": [
+        270,
+        150
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "宽高比",
+          "name": "aspect_ratio",
+          "type": "COMBO",
+          "widget": {
+            "name": "aspect_ratio"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "百万像素",
+          "name": "megapixels",
+          "type": "FLOAT",
+          "widget": {
+            "name": "megapixels"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "倍数",
+          "name": "multiple",
+          "type": "INT",
+          "widget": {
+            "name": "multiple"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "preview",
+          "name": "preview",
+          "shape": 7,
+          "type": "RESOLUTION_PREVIEW",
+          "widget": {
+            "name": "preview"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "宽度",
+          "name": "width",
+          "type": "INT",
+          "links": [
+            14
+          ]
+        },
+        {
+          "localized_name": "高度",
+          "name": "height",
+          "type": "INT",
+          "links": [
+            15
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ResolutionSelector",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
+      },
+      "widgets_values": [
+        "9:16 (Portrait Widescreen)",
+        1,
+        8
+      ],
+      "widgets_values_named": {
+        "aspect_ratio": "9:16 (Portrait Widescreen)",
+        "megapixels": 1,
+        "multiple": 8
+      }
+    },
+    {
+      "id": 16,
+      "type": "LoadImage",
+      "pos": [
+        30,
+        640
+      ],
+      "size": [
+        340,
+        460
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "图像",
+          "name": "image",
+          "type": "COMBO",
+          "widget": {
+            "name": "image"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "选择文件上传",
+          "name": "upload",
+          "type": "IMAGEUPLOAD",
+          "widget": {
+            "name": "upload"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "图像",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            17
+          ]
+        },
+        {
+          "localized_name": "遮罩",
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage",
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0"
+      },
+      "widgets_values": [
+        "10A.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "10A.jpg",
+        "upload": "image"
+      }
+    }
+  ],
+  "links": [
+    [
+      2,
+      1,
+      0,
+      5,
+      0,
+      "MODEL"
+    ],
+    [
+      3,
+      5,
+      0,
+      6,
+      0,
+      "MODEL"
+    ],
+    [
+      4,
+      6,
+      0,
+      7,
+      0,
+      "MODEL"
+    ],
+    [
+      5,
+      7,
+      0,
+      8,
+      0,
+      "MODEL"
+    ],
+    [
+      6,
+      8,
+      0,
+      9,
+      0,
+      "MODEL"
+    ],
+    [
+      7,
+      9,
+      0,
+      10,
+      0,
+      "MODEL"
+    ],
+    [
+      8,
+      4,
+      0,
+      10,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      9,
+      4,
+      1,
+      10,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      11,
+      10,
+      0,
+      11,
+      0,
+      "LATENT"
+    ],
+    [
+      12,
+      3,
+      0,
+      11,
+      1,
+      "VAE"
+    ],
+    [
+      13,
+      11,
+      0,
+      12,
+      0,
+      "IMAGE"
+    ],
+    [
+      14,
+      15,
+      0,
+      14,
+      0,
+      "INT"
+    ],
+    [
+      15,
+      15,
+      1,
+      14,
+      1,
+      "INT"
+    ],
+    [
+      16,
+      14,
+      0,
+      10,
+      3,
+      "LATENT"
+    ],
+    [
+      1,
+      2,
+      0,
+      4,
+      0,
+      "CLIP"
+    ],
+    [
+      17,
+      16,
+      0,
+      4,
+      1,
+      "IMAGE"
+    ],
+    [
+      19,
+      3,
+      0,
+      4,
+      4,
+      "VAE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.65,
+      "offset": [
+        100,
+        100
+      ]
+    },
+    "frontendVersion": "1.53.6",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "extensions": {
+    "seed_widgets": {
+      "10": 0
+    }
+  },
+  "version": 0.4
+}
