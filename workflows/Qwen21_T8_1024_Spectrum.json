@@ -1,0 +1,1085 @@
+{
+  "id": "f80185cf-f3d9-433b-a3ab-aede678ec63e",
+  "revision": 0,
+  "last_node_id": 13,
+  "last_link_id": 13,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "UNETLoader",
+      "pos": [
+        30,
+        80
+      ],
+      "size": [
+        270,
+        82
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "UNet名称",
+          "name": "unet_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "unet_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "数据类型",
+          "name": "weight_dtype",
+          "type": "COMBO",
+          "widget": {
+            "name": "weight_dtype"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "模型",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            2
+          ]
+        }
+      ],
+      "title": "01 / Official Qwen 2.1 model",
+      "properties": {
+        "Node name for S&R": "UNETLoader"
+      },
+      "widgets_values": [
+        "qwen_image_2.1_int8_convrot.safetensors",
+        "default"
+      ],
+      "widgets_values_named": {
+        "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    {
+      "id": 2,
+      "type": "CLIPLoader",
+      "pos": [
+        30,
+        300
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "CLIP名称",
+          "name": "clip_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "clip_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "类型",
+          "name": "type",
+          "type": "COMBO",
+          "widget": {
+            "name": "type"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "设备",
+          "name": "device",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "device"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "CLIP",
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            1
+          ]
+        }
+      ],
+      "title": "02 / Qwen3-VL 8B text encoder",
+      "properties": {
+        "Node name for S&R": "CLIPLoader"
+      },
+      "widgets_values": [
+        "qwen3vl_8b_fp8_scaled.safetensors",
+        "qwen_image",
+        "default"
+      ],
+      "widgets_values_named": {
+        "clip_name": "qwen3vl_8b_fp8_scaled.safetensors",
+        "type": "qwen_image",
+        "device": "default"
+      }
+    },
+    {
+      "id": 3,
+      "type": "VAELoader",
+      "pos": [
+        30,
+        520
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "vae名称",
+          "name": "vae_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "vae_name"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "VAE",
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            12
+          ]
+        }
+      ],
+      "title": "03 / Official Qwen 2.1 VAE",
+      "properties": {
+        "Node name for S&R": "VAELoader"
+      },
+      "widgets_values": [
+        "qwen_image_2.1_vae_bf16.safetensors"
+      ],
+      "widgets_values_named": {
+        "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+      }
+    },
+    {
+      "id": 4,
+      "type": "TextEncodeQwenImage21",
+      "pos": [
+        30,
+        740
+      ],
+      "size": [
+        370,
+        350
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "clip",
+          "name": "clip",
+          "type": "CLIP",
+          "link": 1
+        },
+        {
+          "localized_name": "image_1",
+          "name": "images.image_1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "shape": 7,
+          "type": "VAE",
+          "link": null
+        },
+        {
+          "localized_name": "prompt",
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "negative_prompt",
+          "name": "negative_prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "negative_prompt"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "resolution",
+          "name": "resolution",
+          "type": "INT",
+          "widget": {
+            "name": "resolution"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "positive",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            8
+          ]
+        },
+        {
+          "localized_name": "negative",
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": [
+            9
+          ]
+        },
+        {
+          "localized_name": "latent",
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            10
+          ]
+        }
+      ],
+      "title": "04 / Prompt + resolution / official",
+      "properties": {
+        "Node name for S&R": "TextEncodeQwenImage21"
+      },
+      "widgets_values": [
+        "A studio photograph of a small red ceramic teapot on a pale wooden table, a white card next to it clearly reads \"QWEN 2.1\", soft window lighting, a green plant in the background, realistic glaze and shadows, clean composition.",
+        "",
+        1024
+      ],
+      "widgets_values_named": {
+        "prompt": "A studio photograph of a small red ceramic teapot on a pale wooden table, a white card next to it clearly reads \"QWEN 2.1\", soft window lighting, a green plant in the background, realistic glaze and shadows, clean composition.",
+        "negative_prompt": "",
+        "resolution": 1024
+      }
+    },
+    {
+      "id": 5,
+      "type": "ModelAttentionBackend",
+      "pos": [
+        460,
+        80
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 2
+        },
+        {
+          "localized_name": "attention",
+          "name": "attention",
+          "type": "COMBO",
+          "widget": {
+            "name": "attention"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "模型",
+          "name": "model",
+          "type": "MODEL",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "title": "05 / Comfy Kitchen (official)",
+      "properties": {
+        "Node name for S&R": "ModelAttentionBackend"
+      },
+      "widgets_values": [
+        "comfy kitchen attention"
+      ],
+      "widgets_values_named": {
+        "attention": "comfy kitchen attention"
+      }
+    },
+    {
+      "id": 6,
+      "type": "QwenImage21SageAttentionT8",
+      "pos": [
+        460,
+        240
+      ],
+      "size": [
+        276.601171875,
+        26
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 4,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "模型",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            4
+          ]
+        }
+      ],
+      "title": "06 / T8 Sage / BYPASSED",
+      "properties": {
+        "Node name for S&R": "QwenImage21SageAttentionT8"
+      }
+    },
+    {
+      "id": 7,
+      "type": "QwenImage21SolAttentionT8",
+      "pos": [
+        460,
+        400
+      ],
+      "size": [
+        323.776953125,
+        130
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 4,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 4
+        },
+        {
+          "localized_name": "tau",
+          "name": "tau",
+          "type": "FLOAT",
+          "widget": {
+            "name": "tau"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "min_tokens",
+          "name": "min_tokens",
+          "type": "INT",
+          "widget": {
+            "name": "min_tokens"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "start_percent",
+          "name": "start_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "start_percent"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "end_percent",
+          "name": "end_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "end_percent"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "模型",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            5
+          ]
+        }
+      ],
+      "title": "07 / T8 Sol / BYPASSED at 1024",
+      "properties": {
+        "Node name for S&R": "QwenImage21SolAttentionT8"
+      },
+      "widgets_values": [
+        1,
+        12288,
+        0.15,
+        0.85,
+        false
+      ],
+      "widgets_values_named": {
+        "tau": 1,
+        "min_tokens": 12288,
+        "start_percent": 0.15,
+        "end_percent": 0.85,
+        "enabled": false
+      }
+    },
+    {
+      "id": 8,
+      "type": "QwenImage21BlockCacheT8",
+      "pos": [
+        460,
+        710
+      ],
+      "size": [
+        322.683203125,
+        202
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 4,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 5
+        },
+        {
+          "localized_name": "residual_diff_threshold",
+          "name": "residual_diff_threshold",
+          "type": "FLOAT",
+          "widget": {
+            "name": "residual_diff_threshold"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "start_percent",
+          "name": "start_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "start_percent"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "end_percent",
+          "name": "end_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "end_percent"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "max_consecutive_hits",
+          "name": "max_consecutive_hits",
+          "type": "INT",
+          "widget": {
+            "name": "max_consecutive_hits"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "cache_device",
+          "name": "cache_device",
+          "type": "COMBO",
+          "widget": {
+            "name": "cache_device"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "metric_stride",
+          "name": "metric_stride",
+          "type": "INT",
+          "widget": {
+            "name": "metric_stride"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "max_cache_mb",
+          "name": "max_cache_mb",
+          "type": "INT",
+          "widget": {
+            "name": "max_cache_mb"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "模型",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            6
+          ]
+        }
+      ],
+      "title": "08 / T8 Block Cache / BYPASSED",
+      "properties": {
+        "Node name for S&R": "QwenImage21BlockCacheT8"
+      },
+      "widgets_values": [
+        0.08,
+        0.1,
+        0.85,
+        2,
+        "cpu",
+        8,
+        1024
+      ],
+      "widgets_values_named": {
+        "residual_diff_threshold": 0.08,
+        "start_percent": 0.1,
+        "end_percent": 0.85,
+        "max_consecutive_hits": 2,
+        "cache_device": "cpu",
+        "metric_stride": 8,
+        "max_cache_mb": 1024
+      }
+    },
+    {
+      "id": 9,
+      "type": "QwenImage21SpectrumT8",
+      "pos": [
+        870,
+        80
+      ],
+      "size": [
+        303.6998046875,
+        250
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 6
+        },
+        {
+          "localized_name": "history",
+          "name": "history",
+          "type": "INT",
+          "widget": {
+            "name": "history"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "degree",
+          "name": "degree",
+          "type": "INT",
+          "widget": {
+            "name": "degree"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "ridge",
+          "name": "ridge",
+          "type": "FLOAT",
+          "widget": {
+            "name": "ridge"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "guard_threshold",
+          "name": "guard_threshold",
+          "type": "FLOAT",
+          "widget": {
+            "name": "guard_threshold"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "start_percent",
+          "name": "start_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "start_percent"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "end_percent",
+          "name": "end_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "end_percent"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "max_consecutive_hits",
+          "name": "max_consecutive_hits",
+          "type": "INT",
+          "widget": {
+            "name": "max_consecutive_hits"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "cache_device",
+          "name": "cache_device",
+          "type": "COMBO",
+          "widget": {
+            "name": "cache_device"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "max_cache_mb",
+          "name": "max_cache_mb",
+          "type": "INT",
+          "widget": {
+            "name": "max_cache_mb"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "模型",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            7
+          ]
+        }
+      ],
+      "title": "09 / T8 Spectrum / ON",
+      "properties": {
+        "Node name for S&R": "QwenImage21SpectrumT8"
+      },
+      "widgets_values": [
+        4,
+        2,
+        0.01,
+        0.25,
+        0.15,
+        0.85,
+        1,
+        "cpu",
+        1024
+      ],
+      "widgets_values_named": {
+        "history": 4,
+        "degree": 2,
+        "ridge": 0.01,
+        "guard_threshold": 0.25,
+        "start_percent": 0.15,
+        "end_percent": 0.85,
+        "max_consecutive_hits": 1,
+        "cache_device": "cpu",
+        "max_cache_mb": 1024
+      }
+    },
+    {
+      "id": 10,
+      "type": "KSampler",
+      "pos": [
+        870,
+        500
+      ],
+      "size": [
+        270,
+        262
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "模型",
+          "name": "model",
+          "type": "MODEL",
+          "link": 7
+        },
+        {
+          "localized_name": "正面条件",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 8
+        },
+        {
+          "localized_name": "负面条件",
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 9
+        },
+        {
+          "localized_name": "Latent图像",
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 10
+        },
+        {
+          "localized_name": "种子",
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "步数",
+          "name": "steps",
+          "type": "INT",
+          "widget": {
+            "name": "steps"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "cfg",
+          "name": "cfg",
+          "type": "FLOAT",
+          "widget": {
+            "name": "cfg"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "采样器名称",
+          "name": "sampler_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "sampler_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "调度器",
+          "name": "scheduler",
+          "type": "COMBO",
+          "widget": {
+            "name": "scheduler"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "降噪",
+          "name": "denoise",
+          "type": "FLOAT",
+          "widget": {
+            "name": "denoise"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "Latent",
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            11
+          ]
+        }
+      ],
+      "title": "10 / Native sampler / fixed seed",
+      "properties": {
+        "Node name for S&R": "KSampler"
+      },
+      "widgets_values": [
+        42,
+        "fixed",
+        25,
+        1,
+        "euler",
+        "simple",
+        1
+      ],
+      "widgets_values_named": {
+        "seed": 42,
+        "control_after_generate": "fixed",
+        "steps": 25,
+        "cfg": 1,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "denoise": 1
+      }
+    },
+    {
+      "id": 11,
+      "type": "VAEDecode",
+      "pos": [
+        870,
+        930
+      ],
+      "size": [
+        140,
+        46
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "Latent",
+          "name": "samples",
+          "type": "LATENT",
+          "link": 11
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "type": "VAE",
+          "link": 12
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "图像",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            13
+          ]
+        }
+      ],
+      "title": "11 / Native VAE decode",
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      }
+    },
+    {
+      "id": 12,
+      "type": "SaveImage",
+      "pos": [
+        1260,
+        80
+      ],
+      "size": [
+        500,
+        560
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "图片",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 13
+        },
+        {
+          "localized_name": "文件名前缀",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": {
+            "name": "filename_prefix"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "title": "12 / Output (drag PNG back to restore)",
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "Qwen21_T8_Canvas_Spectrum"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "Qwen21_T8_Canvas_Spectrum"
+      }
+    },
+    {
+      "id": 13,
+      "type": "Note",
+      "pos": [
+        1260,
+        720
+      ],
+      "size": [
+        470,
+        330
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "READ ME / 使用说明",
+      "properties": {
+        "Node name for S&R": "Note"
+      },
+      "widgets_values": [
+        "官方 Qwen-Image-2.1 / 1024 / 25步 / 固定seed42。\n启用 Kitchen + T8 Spectrum。其他加速节点旁路。\n紫色节点为旁路，选中后 Ctrl+B 切换。不要盲目全开。\nSol完整模型测试发生过系统重启，原因未定。保持 enabled=false，不推荐开启。\n测试必须严格串行；暂停2048压力测试。\nBlock/Spectrum会禁用Core前缀KV缓存，多参考编辑须另行对照。\n请选择本机模型文件，不自动下载。CPU cache不代表主模型在CPU执行。"
+      ],
+      "widgets_values_named": {
+        "text": "官方 Qwen-Image-2.1 / 1024 / 25步 / 固定seed42。\n启用 Kitchen + T8 Spectrum。其他加速节点旁路。\n紫色节点为旁路，选中后 Ctrl+B 切换。不要盲目全开。\nSol完整模型测试发生过系统重启，原因未定。保持 enabled=false，不推荐开启。\n测试必须严格串行；暂停2048压力测试。\nBlock/Spectrum会禁用Core前缀KV缓存，多参考编辑须另行对照。\n请选择本机模型文件，不自动下载。CPU cache不代表主模型在CPU执行。"
+      },
+      "color": "#432",
+      "bgcolor": "#653"
+    }
+  ],
+  "links": [
+    [
+      1,
+      2,
+      0,
+      4,
+      0,
+      "CLIP"
+    ],
+    [
+      2,
+      1,
+      0,
+      5,
+      0,
+      "MODEL"
+    ],
+    [
+      3,
+      5,
+      0,
+      6,
+      0,
+      "MODEL"
+    ],
+    [
+      4,
+      6,
+      0,
+      7,
+      0,
+      "MODEL"
+    ],
+    [
+      5,
+      7,
+      0,
+      8,
+      0,
+      "MODEL"
+    ],
+    [
+      6,
+      8,
+      0,
+      9,
+      0,
+      "MODEL"
+    ],
+    [
+      7,
+      9,
+      0,
+      10,
+      0,
+      "MODEL"
+    ],
+    [
+      8,
+      4,
+      0,
+      10,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      9,
+      4,
+      1,
+      10,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      10,
+      4,
+      2,
+      10,
+      3,
+      "LATENT"
+    ],
+    [
+      11,
+      10,
+      0,
+      11,
+      0,
+      "LATENT"
+    ],
+    [
+      12,
+      3,
+      0,
+      11,
+      1,
+      "VAE"
+    ],
+    [
+      13,
+      11,
+      0,
+      12,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.75,
+      "offset": [
+        100,
+        80
+      ]
+    }
+  },
+  "version": 0.4
+}

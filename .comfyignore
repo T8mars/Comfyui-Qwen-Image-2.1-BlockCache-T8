@@ -1,0 +1,11 @@
+.git/
+.github/
+tests/
+roadmap.md
+SKILL.md
+research_agent.md
+__pycache__/
+*.pyc
+node.zip
+benchmark_server.log
+benchmark_results/

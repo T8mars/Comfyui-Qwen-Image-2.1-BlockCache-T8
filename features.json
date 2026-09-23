@@ -1,0 +1,8 @@
+{
+  "nodes": ["QwenImage21BlockCacheT8", "QwenImage21SpectrumT8", "QwenImage21SageAttentionT8", "QwenImage21SolAttentionT8"],
+  "implemented": ["native_qwen21_model_patcher", "target_only_tail_cache", "shared_cache_forecast_controller", "rectangular_sol_with_exact_prefix_and_boundary", "native_sage_backend", "upstream_dense_backend_preservation", "execution_scoped_cleanup", "scheduled_weight_hook_bypass", "external_wrapper_conflict_detection"],
+  "tested": ["29_cpu_static_and_native_tiny_model_tests", "compiled_sol_bf16_fp16_small_tensor", "native_sage_kitchen_rectangular_and_masked_cuda", "int8_7b_t2i_512_1024", "dynamic_vram_full_sampling", "canvas_json_import_click_run_png", "whitelist_cpu_cold_start", "comfy_node_validate"],
+  "pending": ["broad_prompt_seed_quality", "reference_heavy_edit_vs_native_prefix_kv", "other_quantization_formats", "multi_gpu_validation", "registry_publication"],
+  "suspended": ["large_image_sol_after_system_restart"],
+  "test_policy": "strictly serial; shared benchmark lock; no 2048 stress tests"
+}

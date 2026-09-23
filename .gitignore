@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+roadmap.md
+SKILL.md
+research_agent.md
+node.zip
+benchmark_server.log
+benchmark_results/

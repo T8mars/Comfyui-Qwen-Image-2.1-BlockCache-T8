@@ -1,0 +1,15 @@
+[project]
+name = "qwen-image-21-t8"
+version = "0.1.1"
+description = "Experimental native Qwen-Image-2.1 block cache, spectral forecasting, and attention adapters."
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/T8mars/Comfyui-Qwen-Image-2.1-T8"
+
+[tool.comfy]
+PublisherId = "t8star"
+DisplayName = "Qwen Image 2.1 T8"
+requires-comfyui = ">=0.37.0"
