@@ -1,15 +1,18 @@
 [project]
-name = "qwen-image-21-t8"
-version = "0.1.1"
+name = "qwen-image-21-blockcache-t8"
+version = "0.1.2"
 description = "Experimental native Qwen-Image-2.1 block cache, spectral forecasting, and attention adapters."
 license = { text = "Apache-2.0" }
 requires-python = ">=3.10"
 dependencies = []
+readme = "README.md"
 
 [project.urls]
-Repository = "https://github.com/T8mars/Comfyui-Qwen-Image-2.1-T8"
+Repository = "https://github.com/T8mars/Comfyui-Qwen-Image-2.1-BlockCache-T8"
+Documentation = "https://github.com/T8mars/Comfyui-Qwen-Image-2.1-BlockCache-T8#readme"
+"Bug Tracker" = "https://github.com/T8mars/Comfyui-Qwen-Image-2.1-BlockCache-T8/issues"
 
 [tool.comfy]
 PublisherId = "t8star"
-DisplayName = "Qwen Image 2.1 T8"
+DisplayName = "Qwen Image 2.1 BlockCache T8"
 requires-comfyui = ">=0.37.0"

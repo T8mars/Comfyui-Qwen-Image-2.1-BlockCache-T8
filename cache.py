@@ -117,9 +117,12 @@ class CacheRuntime:
         if not math.isfinite(score):
             return None, None
         if self.block and self.window(self.block, sigma) and score < self.block.threshold:
+            result = target + stream.history[-1][1].to(target)
+            if not torch.isfinite(result).all():
+                return None, None
             self.hits += 1
             stream.consecutive += 1
-            return target + stream.history[-1][1].to(target), "cache"
+            return result, "cache"
         config = self.spectrum
         if config and self.window(config, sigma) and score < config.guard_threshold and len(stream.history) >= config.history:
             weights = forecast_weights([s for s, _ in stream.history], sigma, config.degree, config.ridge)
@@ -134,6 +137,8 @@ class CacheRuntime:
                     if not torch.isfinite(predicted).all():
                         return None, None
                     result[:, start:end].add_(predicted.to(target))
+                if not torch.isfinite(result).all():
+                    return None, None
                 self.forecasts += 1
                 stream.consecutive += 1
                 return result, "spectrum"
@@ -142,6 +147,9 @@ class CacheRuntime:
     def store(self, stream, indicator, sigma, target, anchor):
         tail = self.copy(target)
         tail.sub_(anchor)
+        if not torch.isfinite(tail).all():
+            stream.clear()
+            return
         stream.history.append((sigma, tail))
         keep = self.spectrum.history if self.spectrum else 1
         del stream.history[:-keep]

@@ -110,7 +110,7 @@ def diffusion_wrapper(executor, x, timestep, context, ref_latents=None, image_sl
     uniform_sigma = sigma is not None and bool((sigmas == sigma).all())
 
     progress = None
-    if runtime and runtime.sol_window and sigma is not None:
+    if runtime and runtime.sol_window and uniform_sigma:
         start, end = runtime.sol_window
         if end <= sigma <= start:
             progress = config["sol"].start_percent

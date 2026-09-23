@@ -98,7 +98,7 @@ def run_sampling(patcher, sigmas, uuids=None, edit=False, batch=1, error=False):
 
 class NativeTests(unittest.TestCase):
     def test_canvas_examples_have_valid_links_and_safe_defaults(self):
-        for name, active in (("T2I", "QwenImage21BlockCacheT8"), ("Spectrum", "QwenImage21SpectrumT8")):
+        for name, active in (("T2I", "QwenImage21BlockCacheT8"), ("Spectrum", "QwenImage21SpectrumT8"), ("Sol", "QwenImage21SolAttentionT8")):
             workflow = json.loads((ROOT / "workflows" / f"Qwen21_T8_1024_{name}.json").read_text(encoding="utf-8"))
             by_id = {node["id"]: node for node in workflow["nodes"]}
             by_type = {node["type"]: node for node in workflow["nodes"]}
@@ -106,8 +106,13 @@ class NativeTests(unittest.TestCase):
                 self.assertIn(link, by_id[source]["outputs"][source_slot]["links"])
                 self.assertEqual(by_id[dest]["inputs"][dest_slot]["link"], link)
             self.assertEqual(by_type[active]["mode"], 0)
-            self.assertEqual(by_type["QwenImage21SolAttentionT8"]["mode"], 4)
-            self.assertFalse(by_type["QwenImage21SolAttentionT8"]["widgets_values_named"]["enabled"])
+            sol = by_type["QwenImage21SolAttentionT8"]
+            self.assertEqual(sol["mode"], 0 if name == "Sol" else 4)
+            self.assertEqual(sol["widgets_values_named"]["enabled"], name == "Sol")
+            if name == "Sol":
+                self.assertEqual(sol["widgets_values_named"]["min_tokens"], 4096)
+                for bypassed in ("QwenImage21BlockCacheT8", "QwenImage21SpectrumT8", "QwenImage21SageAttentionT8"):
+                    self.assertEqual(by_type[bypassed]["mode"], 4)
             self.assertEqual(by_type["TextEncodeQwenImage21"]["widgets_values_named"]["resolution"], 1024)
             sampler = by_type["KSampler"]["widgets_values_named"]
             self.assertEqual((sampler["seed"], sampler["steps"], sampler["cfg"]), (42, 25, 1))
@@ -230,6 +235,24 @@ class NativeTests(unittest.TestCase):
         disabled = nodes.QwenImage21SolAttentionT8.execute(enabled, enabled=False)[0]
         self.assertIsNone(disabled.model_options["transformer_options"][runtime.KEY]["sol"])
 
+    def test_sol_window_rejects_mixed_batch_sigmas(self):
+        config = nodes.SolConfig()
+        model = tiny_model().model.diffusion_model
+        seen = []
+
+        def forward(*args, **kwargs):
+            seen.append(args[5]["optimized_attention_override"])
+            return args[0]
+
+        executor = pe.WrapperExecutor.new_class_executor(forward, model, [runtime.diffusion_wrapper])
+        for sigmas, expected in (([0.5, 0.99], None), ([0.5, 0.5], config.start_percent), ([0.99, 0.99], None)):
+            options = {runtime.KEY: {"sol": config}, "sigmas": torch.tensor(sigmas),
+                       runtime.RUNTIME: runtime.SamplingRuntime(None, (0.85, 0.15), {})}
+            with self.subTest(sigmas=sigmas), patch.object(runtime, "make_override", return_value="test") as override:
+                executor.execute(torch.zeros(2, 4, 2, 3), torch.tensor(sigmas), torch.zeros(2, 4, 8), transformer_options=options)
+                self.assertEqual(override.call_args.args[6], expected)
+        self.assertEqual(seen, ["test"] * 3)
+
     def test_native_kitchen_backend_preserved_in_both_orders(self):
         from comfy_extras.nodes_model_advanced import ModelAttentionBackend
         for reverse in (False, True):
@@ -277,6 +300,41 @@ class NativeTests(unittest.TestCase):
 
 
 class ForecastTests(unittest.TestCase):
+    def test_fp16_cache_reconstruction_overflow_falls_back(self):
+        state = cache.CacheRuntime(cache.CacheConfig(start_percent=0, end_percent=1), None, Sampling())
+        stream = state.stream(("fp16",), 0.8)
+        indicator = torch.ones(1, 1, 1)
+        target = torch.full((1, 2, 2), 40000, dtype=torch.float16)
+        state.store(stream, indicator, 0.8, target, torch.zeros_like(target))
+        replay, kind = state.replay(stream, indicator, 0.7, target)
+        self.assertIsNone(replay)
+        self.assertIsNone(kind)
+        self.assertEqual((state.hits, stream.consecutive), (0, 0))
+
+    def test_fp16_residual_overflow_is_not_stored(self):
+        state = cache.CacheRuntime(cache.CacheConfig(), None, Sampling())
+        stream = state.stream(("fp16",), 0.8)
+        target = torch.full((1, 2, 2), 40000, dtype=torch.float16)
+        state.store(stream, torch.ones(1, 1, 1), 0.8, target, -target)
+        self.assertEqual(stream.history, [])
+        self.assertIsNone(stream.indicator)
+
+    def test_spectrum_checks_result_after_low_precision_conversion(self):
+        for value, target_value in ((80000, 0), (40000, 40000)):
+            with self.subTest(value=value, target=target_value):
+                state = cache.CacheRuntime(None, cache.SpectrumConfig(history=3, degree=1, start_percent=0, end_percent=1), Sampling())
+                stream = state.stream(("fp16",), 0.8)
+                indicator = torch.ones(1, 1, 1)
+                for sigma in (0.8, 0.7, 0.6):
+                    tail = torch.full((1, 2, 2), value / 2, dtype=torch.float16)
+                    state.store(stream, indicator, sigma, tail, torch.zeros_like(tail))
+                target = torch.full_like(tail, target_value)
+                with patch.object(cache, "forecast_weights", return_value=[0, 0, 2]):
+                    replay, kind = state.replay(stream, indicator, 0.5, target)
+                self.assertIsNone(replay)
+                self.assertIsNone(kind)
+                self.assertEqual((state.forecasts, stream.consecutive), (0, 0))
+
     def test_default_quadratic_allows_next_sampling_step(self):
         weights = cache.forecast_weights([0.9, 0.8, 0.7, 0.6], 0.5, 2, 0.01)
         self.assertIsNotNone(weights)

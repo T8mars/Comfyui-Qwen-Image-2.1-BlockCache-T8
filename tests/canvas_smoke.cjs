@@ -3,16 +3,31 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
-const variant = process.argv.includes('--spectrum') ? 'Spectrum' : 'T2I';
+const variant = process.argv.includes('--sol') ? 'Sol' : process.argv.includes('--spectrum') ? 'Spectrum' : 'T2I';
 
 (async () => {
   await fs.mkdir(path.join(root, 'benchmark_results'), {recursive: true});
   const lock = path.join(root, 'benchmark_results/run.lock');
   const lockFile = await fs.open(lock, 'wx');
+  let browser;
+  let pending = false;
   try {
   await lockFile.writeFile('Canvas test running. Do not run other GPU or API tests.\n');
-  const browser = await chromium.launch({headless: true, executablePath: process.env.CHROMIUM_PATH || undefined});
+  browser = await chromium.launch({headless: true, executablePath: process.env.CHROMIUM_PATH || undefined});
   const page = await browser.newPage({viewport: {width: 1800, height: 1200}});
+  const executions = new Map();
+  page.on('websocket', ws => ws.on('framereceived', ({payload}) => {
+    if (typeof payload !== 'string') return;
+    const event = JSON.parse(payload);
+    if (event.type !== 'executing') return;
+    const {prompt_id, node} = event.data;
+    const state = executions.get(prompt_id) || {durations:{}};
+    const now = performance.now();
+    if (state.node != null) state.durations[state.node] = (now - state.started) / 1000;
+    state.node = node;
+    state.started = now;
+    executions.set(prompt_id, state);
+  }));
   page.on('pageerror', e => console.log('PAGEERROR', String(e)));
   await page.goto('http://127.0.0.1:8189', {waitUntil: 'networkidle'});
   await page.waitForFunction(() => !!window.app?.graph, {timeout: 60000});
@@ -65,7 +80,7 @@ const variant = process.argv.includes('--spectrum') ? 'Spectrum' : 'T2I';
     vae.connect(0,decode,decode.findInputSlot('vae'));
     decode.connect(0,save,save.findInputSlot('images'));
     const note = create('Note', 'READ ME / 使用说明', [1690,600], {
-      text:'官方 Qwen-Image-2.1 管道 / 1024 / 25步 / 固定seed42。\n默认启用 Kitchen + T8 Block Cache。\n紫色节点为旁路：选中后 Ctrl+B 启用/旁路。\nSage、Sol、Spectrum 可以独立使用；不要一次盲目全开。\nSol 默认 min_tokens=12288，1024图不会启用稀疏内核；2048可测。\nBlock/Spectrum 会禁用当前Core前缀KV缓存，多参考编辑须单独对照。\nCPU cache只占缓存内存，不表示主模型在CPU执行。\n请自行选择已安装的Qwen3-VL 8B编码器，模型不自动下载。'});
+      text:'官方 Qwen-Image-2.1 管道 / 1024 / 25步 / 固定seed42。\n默认启用 Kitchen + T8 Block Cache。\n紫色节点为旁路：选中后 Ctrl+B 启用/旁路。\nSage、Sol、Spectrum 可以独立使用；不要一次盲目全开。\nSol 默认关闭，min_tokens=12288，1024图不会启用稀疏内核；2048压力测试暂停。\nBlock/Spectrum 会禁用当前Core前缀KV缓存，多参考编辑须单独对照。\nCPU cache只占缓存内存，不表示主模型在CPU执行。\n请自行选择已安装的Qwen3-VL 8B编码器，模型不自动下载。'});
     note.size = [470,330];
     text.pos = [30,740];
     kitchen.pos = [460,80];
@@ -84,7 +99,16 @@ const variant = process.argv.includes('--spectrum') ? 'Spectrum' : 'T2I';
       spectrum.title = '09 / T8 Spectrum / ON';
       note.widgets[0].value = note.widgets[0].value.replace('默认启用 Kitchen + T8 Block Cache。','默认启用 Kitchen + T8 Spectrum，Block/Sage/Sol旁路。');
     }
-    note.widgets[0].value += '\nSol完整模型测试中发生过系统重启，默认disabled，不推荐开启。测试必须严格串行，2048压力测试暂停。';
+    if (variant === 'Sol') {
+      block.mode = 4;
+      block.title = '08 / T8 Block Cache / BYPASSED';
+      sol.mode = 0;
+      sol.title = '07 / T8 Sol / ON / 1024 TEST';
+      sol.widgets.find(w => w.name === 'enabled').value = true;
+      sol.widgets.find(w => w.name === 'min_tokens').value = 4096;
+      note.widgets[0].value = '1024 Sol独立测试 / 25步 / seed42 / tau1。\nKitchen + Sol启用；Block/Spectrum/Sage旁路。\nmin_tokens=4096、enabled=true确保实际运行Sol，不是dense回退。\n本轮启动参数：--reserve-vram 5 --vram-headroom 3 --disable-comfy-compiler。\n严格串行，完成后卸载模型再测试下一项。\n2048曾发生系统重启，原因未明；本图仅用于1024测试，不证明2048安全或提速。\n需要关闭Sol时将enabled设false，或选中节点Ctrl+B旁路。';
+    }
+    if (variant !== 'Sol') note.widgets[0].value += '\nSol的2048测试中发生过系统重启，默认disabled。测试必须严格串行，2048压力测试暂停。';
     save.widgets.find(w => w.name === 'filename_prefix').value = 'Qwen21_T8_Canvas_' + variant;
     app.canvas.ds.scale = 0.75;
     app.canvas.ds.offset = [100,80];
@@ -106,10 +130,15 @@ const variant = process.argv.includes('--spectrum') ? 'Spectrum' : 'T2I';
     if (queue.queue_running.length || queue.queue_pending.length) throw new Error('ComfyUI is busy; run tests strictly one at a time.');
     const responsePromise = page.waitForResponse(r => r.url().endsWith('/prompt') && r.request().method() === 'POST', {timeout:30000});
     console.log('BUTTONS', await page.getByRole('button').allTextContents());
+    pending = true;
     await page.getByRole('button',{name:'运行',exact:true}).click();
     const response = await responsePromise;
     const result = await response.json();
-    if (response.status() !== 200 || !result.prompt_id) throw new Error(JSON.stringify(result));
+    if (response.status() !== 200) {
+      pending = false;
+      throw new Error(JSON.stringify(result));
+    }
+    if (!result.prompt_id) throw new Error(JSON.stringify(result));
     console.log('CANVAS_QUEUED', result.prompt_id);
     const queued = response.request().postDataJSON();
     await fs.writeFile(path.join(root,`benchmark_results/canvas_${variant}_queued.json`),JSON.stringify(queued,null,2));
@@ -119,14 +148,22 @@ const variant = process.argv.includes('--spectrum') ? 'Spectrum' : 'T2I';
       history = await page.evaluate(async id => (await (await fetch('/history/'+id)).json())[id],result.prompt_id);
       if (history) break;
     }
-    if (!history || history.status.status_str !== 'success') throw new Error(JSON.stringify(history));
+    if (['success', 'error'].includes(history?.status?.status_str)) pending = false;
+    if (pending || !history.status.completed || history.status.status_str !== 'success') throw new Error(JSON.stringify(history));
     await fs.writeFile(path.join(root,`benchmark_results/canvas_${variant}_history.json`),JSON.stringify(history,null,2));
+    const timings = executions.get(result.prompt_id)?.durations;
+    if (!timings?.['10']) throw new Error('Sampler execution was not observed; not a valid canvas sampling test.');
+    await fs.writeFile(path.join(root,`benchmark_results/canvas_${variant}_timings.json`),JSON.stringify(timings,null,2));
     await page.screenshot({path:path.join(root,`benchmark_results/canvas_${variant}_completed.png`)});
-    console.log('CANVAS_SUCCESS',JSON.stringify(history.outputs));
+    console.log('CANVAS_SUCCESS',JSON.stringify(history.outputs),'SAMPLER_SECONDS',timings['10']);
   }
-  await browser.close();
   } finally {
-    await lockFile.close();
-    await fs.unlink(lock);
+    try {
+      if (browser) await browser.close();
+    } finally {
+      await lockFile.close();
+      if (pending) console.error('Test may still be running. Lock retained:', lock, 'Verify the server is idle before removing it.');
+      else await fs.unlink(lock);
+    }
   }
 })().catch(e => {console.error(e); process.exit(1)});

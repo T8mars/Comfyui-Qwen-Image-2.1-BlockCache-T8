@@ -1,0 +1,26 @@
+name: Publish to Comfy Registry
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [pyproject.toml]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: comfy-registry-publish
+  cancel-in-progress: false
+
+jobs:
+  publish-node:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Publish custom node
+        uses: Comfy-Org/publish-node-action@d2366e7abb6ab16f3bb03e3520ae25c8cf749bc9
+        with:
+          skip_checkout: 'true'
+          personal_access_token: ${{ secrets.REGISTRY_ACCESS_TOKEN }}

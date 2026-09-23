@@ -15,6 +15,9 @@ import aiohttp
 
 
 ROOT = Path(__file__).resolve().parents[1]
+MODES = ("baseline", "block", "spectrum", "combined", "sol", "kitchen", "kitchen-block",
+         "kitchen-spectrum", "kitchen-combined", "kitchen-sol", "sage", "sage-block",
+         "sage-spectrum", "sage-combined", "sage-sol")
 DEFAULT_PROMPT = ('A studio photograph of a small red ceramic teapot on a pale wooden table, '
                   'a white card next to it clearly reads "QWEN 2.1", soft window lighting, '
                   'a green plant in the background, realistic glaze and shadows, clean composition.')
@@ -68,7 +71,7 @@ def graph(args, mode, nonce):
     return prompt
 
 
-async def run(args):
+async def run(args, state):
     target = ROOT / "benchmark_results"
     target.mkdir(exist_ok=True)
     timeout = aiohttp.ClientTimeout(total=args.timeout)
@@ -84,9 +87,11 @@ async def run(args):
             stamp = time.strftime("%Y%m%d_%H%M%S")
             path = target / f"{stamp}_{args.size}_{mode}_{nonce[:8]}.json"
             async with session.ws_connect(args.url.replace("http", "ws", 1) + "/ws?clientId=" + nonce) as ws:
+                state["pending"] = True
                 async with session.post(args.url + "/prompt", json={"prompt": data["graph"], "client_id": nonce}) as response:
                     submitted = await response.json()
                     if response.status != 200:
+                        state["pending"] = False
                         raise RuntimeError(submitted)
                 prompt_id = submitted["prompt_id"]
                 print(f"START {mode} {args.size}px {args.steps} steps prompt={prompt_id}", flush=True)
@@ -116,6 +121,10 @@ async def run(args):
                     raise RuntimeError("KSampler was cached or failed: not a valid benchmark")
                 async with session.get(args.url + "/history/" + prompt_id) as response:
                     history = (await response.json())[prompt_id]
+                if history["status"]["status_str"] in ("success", "error"):
+                    state["pending"] = False
+                if not history["status"]["completed"] or history["status"]["status_str"] != "success":
+                    raise RuntimeError(history["status"])
                 data.update(prompt_id=prompt_id, durations=durations, wall_seconds=time.perf_counter() - start,
                             outputs=history["outputs"], status=history["status"])
                 path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -128,7 +137,7 @@ if __name__ == "__main__":
     parser.add_argument("--model", default="qwen_image_2.1_int8_convrot.safetensors")
     parser.add_argument("--clip", default="qwen3vl_8b_fp8_scaled.safetensors")
     parser.add_argument("--vae", default="qwen_image_2.1_vae_bf16.safetensors")
-    parser.add_argument("--modes", default="baseline,block,spectrum,combined,baseline")
+    parser.add_argument("--modes", default="baseline", choices=MODES, help="One mode per invocation; unload models before starting the next test")
     parser.add_argument("--size", type=int, default=512)
     parser.add_argument("--steps", type=int, default=25)
     parser.add_argument("--seed", type=int, default=42)
@@ -151,7 +160,11 @@ if __name__ == "__main__":
     lock.parent.mkdir(exist_ok=True)
     with lock.open("x", encoding="utf-8") as handle:
         handle.write("Native API benchmark running. Do not run other GPU or canvas tests.\n")
+    state = {"pending": False}
     try:
-        asyncio.run(run(args))
+        asyncio.run(run(args, state))
     finally:
-        lock.unlink()
+        if state["pending"]:
+            print(f"Test may still be running. Lock retained: {lock}. Verify the server is idle before removing it.", flush=True)
+        else:
+            lock.unlink()

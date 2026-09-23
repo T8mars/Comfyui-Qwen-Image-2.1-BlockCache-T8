@@ -1,8 +1,8 @@
-# Comfyui-Qwen-Image-2.1-T8
+# Comfyui-Qwen-Image-2.1-BlockCache-T8
 
 简体中文 | [English](README_EN.md)
 
-面向 **ComfyUI 原生 Qwen-Image-2.1** 的四个独立 MODEL 节点，版本 `0.1.1`。使用官方模型加载器、文本条件、采样器和 VAE，不使用 Diffusers 包装管道。
+面向 **ComfyUI 原生 Qwen-Image-2.1** 的四个独立 MODEL 节点：Block Cache、Spectrum、Sage Attention 和 Sol Attention，版本 `0.1.2`。使用官方模型加载器、文本条件、采样器和 VAE，不使用 Diffusers 包装管道。
 
 当前为实验版：已用真实 7B INT8 模型完成 512/1024 文生图、采样提速对照及前端画布运行。测试样本有限，不保证所有工作流提速或无画质变化。**Sol 的 2048 完整模型测试期间发生系统重启，原因未定；Sol 默认关闭，不作为已验证加速推荐。**
 
@@ -13,11 +13,27 @@
 
 下载原始 JSON 后拖入 ComfyUI 画布，选择本机模型文件，再点击运行。它们是包含布局和连接的**前端工作流，不是 API JSON**；均已通过真实浏览器前端导入、点击运行和出图验证。紫色节点为旁路，选中后 `Ctrl+B` 切换；Sol 另外保持 `enabled=false`。
 
+另有 [1024 Sol 实验工作流](workflows/Qwen21_T8_1024_Sol.json)，已实际画布运行 25 步。关闭 Core compiler、增加显存预留后，串行对照 Kitchen 平均 16.61秒 → Sol 15.96秒，约快 4%；但出现额外乱码小字及壶盖细节改变。此图明确开启 Sol（`enabled=true, min_tokens=4096`），不是默认推荐配置；[完整条件与限制](BENCHMARKS.md#serial-1024-sol-follow-up--1024-串行复测)。不能据此认定 2048 安全。
+
 4060 Ti 16GB、1024²、25步、同 seed/提示词：原生采样约 **18–19秒**；Block Cache 约 **11.3秒**；Kitchen + Block 约 **9.6秒**；修复后的 Spectrum 约 **13.3秒**。只统计采样节点，不是完整工作流耗时。[详细测试条件、输出差异及限制](BENCHMARKS.md)。请严格串行测试，当前暂停 2048 压力测试。
 
 ## 安装与连接
 
-将本目录放入 `ComfyUI/custom_nodes/Comfyui-Qwen-Image-2.1-T8`，完整重启后在 `T8/Qwen Image 2.1` 分类添加节点。需要支持 Qwen2.1 的 ComfyUI（基线 0.37.0）及随 Core 配套的 Comfy Kitchen。Sage 节点另外要求当前 ComfyUI Python 环境已安装兼容的 SageAttention；本项目不会自动安装或下载任何依赖/模型。
+在 ComfyUI 节点管理器搜索 **Qwen Image 2.1 BlockCache T8** 或 `qwen-image-21-blockcache-t8`，核对 Publisher 为 `t8star`。发布状态以 [Comfy Registry 页面](https://registry.comfy.org/publishers/t8star/nodes/qwen-image-21-blockcache-t8) 为准；若尚未索引，可刷新列表或手动安装：
+
+```bash
+cd ComfyUI/custom_nodes
+git clone https://github.com/T8mars/Comfyui-Qwen-Image-2.1-BlockCache-T8.git
+```
+
+完整重启后在 `T8/Qwen Image 2.1` 分类添加节点。需要支持 Qwen2.1 的 ComfyUI（基线 0.37.0）及随 Core 配套的 Comfy Kitchen。Sage 节点另外要求当前 ComfyUI Python 环境已安装兼容的 SageAttention；本项目不会自动安装或下载任何依赖/模型。
+
+已安装旧名 `Comfyui-Qwen-Image-2.1-T8` 的用户不要再装一份。在原插件目录更新远端并拉取即可；文件夹可保留旧名，四个节点的内部 ID 不变：
+
+```bash
+git remote set-url origin https://github.com/T8mars/Comfyui-Qwen-Image-2.1-BlockCache-T8.git
+git pull --ff-only
+```
 
 继续使用 [官方 Qwen2.1 工作流](https://github.com/Comfy-Org/workflow_templates/blob/main/templates/image_qwen_image_2_1_t2i.json)。将加速节点插在 MODEL 路径上，最后的 MODEL 接原生 sampler/guider/scheduler。独立 sampler 设置、提示词、参考图、透明通道和 VAE 流程保持官方方式。
 
@@ -39,7 +55,7 @@ Comfy Kitchen 使用官方 `Model Attention Backend` 节点选择 `comfy kitchen
 | Qwen Image 2.1 Block Cache (T8) | 每次真实计算 Block 0；指标稳定时复用目标图像的后续层残差，跳过 Block 1–31 | threshold `0.08`，范围 `0.10–0.85`，最多连续命中 `2` |
 | Qwen Image 2.1 Spectrum (T8) | 用真实完整步的目标残差做 Chebyshev/ridge 预测；仍真实计算 Block 0 并进行变化检查 | history `4`，degree `2`，ridge `0.01`，guard `0.25`，范围 `0.15–0.85`，最多连续预测 `1` |
 | Qwen Image 2.1 Sage Attention (T8) | 调用 Core 的 Sage 适配，保留矩形 Q/K、mask 和原生回退行为 | 无额外参数 |
-| Qwen Image 2.1 Sol Attention (T8) | 实验性稀疏注意力；完整模型稳定性未验证，默认不执行 | enabled `false`，tau `1.0`，min_tokens `12288`，范围 `0.15–0.85` |
+| Qwen Image 2.1 Sol Attention (T8) | 实验性稀疏注意力；1024 限定条件测试通过，2048 重启原因未明，默认不执行 | enabled `false`，tau `1.0`，min_tokens `12288`，范围 `0.15–0.85` |
 
 Block Cache 与 T8 Spectrum 可各自使用，也可前后串接：Block Cache 优先，未命中时再尝试预测；只将真实完整计算写入历史；使用二者较小的连续跳过上限。缓存位置有任一选择 CPU 就用 CPU；内存预算取较小值。这些规则与连接顺序无关。
 
@@ -71,7 +87,9 @@ python -m compileall -q __init__.py nodes.py cache.py runtime.py attention.py te
 python tests/gpu_smoke.py
 ```
 
-2026-09-23，Core `e638023d`，Comfy Kitchen `0.2.35`，Torch `2.10.0+cu130`：29 项 CPU/静态测试通过；官方小型随机权重模型的文生图/编辑/多 batch 完整路径与原生结果相同；合成残差路径证实真正跳过后续 block 并执行原生输出头。另有矩形 Sol 数值测试与示例画布连接、默认值校验。
+2026-09-23，Core `e638023d`，Comfy Kitchen `0.2.35`，Torch `2.10.0+cu130`：39 项 CPU/静态测试连续串行运行 50 轮通过（1,950 次，逐轮打乱顺序），另有 4 项浏览器生命周期模拟测试；这不是 50 次大模型验证。官方小型随机权重模型的文生图/编辑/多 batch 完整路径与原生结果相同；合成残差路径证实真正跳过后续 block 并执行原生输出头。
+
+本次交叉检查修复：缓存/Spectrum 低精度残差或重建溢出时回退真实计算；混合 sigma 批次不启用 Sol；测试提交后状态不明时保留锁，浏览器异常也关闭。API 测试一次只允许一个明确模式，GPU 探针也使用共享锁。新增检查后的 GPU 速度尚未重测，历史基准不代表本次修复后的重新测量。
 
 RTX 4060 Ti 小张量探针：BF16/FP16 Sol compiled-vs-eager 相对 L2 约 `0.01225/0.01234`；这是数值测试，不代表完整模型 Sol 稳定。真实 INT8 7B、原生 DynamicVRAM、512/1024 采样与画布验证见 [BENCHMARKS.md](BENCHMARKS.md)。修复了 Spectrum 默认二次外推被旧限制全部拒绝的问题；1024 实测预测命中 9/25 次，Block 命中 11/25 次。
 
@@ -79,4 +97,6 @@ RTX 4060 Ti 小张量探针：BF16/FP16 Sol compiled-vs-eager 相对 L2 约 `0.0
 
 插件自写代码采用 [Apache-2.0](LICENSE)，研究和归属见 [NOTICE](NOTICE.md)。Qwen 模型材料遵循其独立许可证；不随本包发布权重。Spectrum 节点是针对 Qwen2.1 的简化谱预测适配，不代表原论文完整控制策略。
 
-代码仓库：[T8mars/Comfyui-Qwen-Image-2.1-T8](https://github.com/T8mars/Comfyui-Qwen-Image-2.1-T8)。尚未发布 Comfy Registry；GitHub 发布不等于节点管理器注册。
+代码仓库：[T8mars/Comfyui-Qwen-Image-2.1-BlockCache-T8](https://github.com/T8mars/Comfyui-Qwen-Image-2.1-BlockCache-T8)。Registry 包 ID：`qwen-image-21-blockcache-t8`；Publisher：`t8star`。采用 [ComfyUI 官方发布流程](https://docs.comfy.org/registry/publishing)，推送 `pyproject.toml` 更新后由 GitHub Actions 发布；GitHub 推送成功不等于 Registry 已完成处理，请查看 [发布任务](https://github.com/T8mars/Comfyui-Qwen-Image-2.1-BlockCache-T8/actions/workflows/publish_action.yml) 和 Registry 状态。
+
+`0.1.2`：修复低精度缓存/Spectrum 溢出和混合 sigma 的 Sol 窗口；加强串行测试锁与异常清理；新增已实际画布运行的 1024 Sol 实验工作流。研究记录、机器日志、模型及生成图片不随包发布。

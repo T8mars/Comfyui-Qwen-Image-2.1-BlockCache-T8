@@ -46,4 +46,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    lock = Path(__file__).resolve().parents[1] / "benchmark_results" / "run.lock"
+    lock.parent.mkdir(exist_ok=True)
+    with lock.open("x", encoding="utf-8") as handle:
+        handle.write("Small GPU probe running. Do not run other GPU or canvas tests.\n")
+    try:
+        main()
+    finally:
+        lock.unlink()

@@ -100,13 +100,13 @@ class QwenImage21SolAttentionT8(io.ComfyNode):
     def define_schema(cls):
         return io.Schema(
             node_id="QwenImage21SolAttentionT8", display_name="Qwen Image 2.1 Sol Attention (T8)", category=CATEGORY,
-            description="Opt-in experimental Sol adapter. A 2048 full-model test ended in a system restart; cause unresolved. Disabled by default; no verified end-to-end speedup.",
+            description="Opt-in experimental Sol adapter. Limited 1024 testing passed with Core compilation disabled; image details changed. A 2048 test restarted the system; cause unresolved. Disabled by default.",
             inputs=[io.Model.Input("model"),
                     io.Float.Input("tau", default=1.0, min=0, max=4, step=0.05),
                     io.Int.Input("min_tokens", default=12288, min=64, max=131072, step=64),
                     io.Float.Input("start_percent", default=0.15, min=0, max=1, step=0.01),
                     io.Float.Input("end_percent", default=0.85, min=0, max=1, step=0.01),
-                    io.Boolean.Input("enabled", default=False, tooltip="Leave disabled unless explicitly testing this unvalidated sparse kernel path.")],
+                    io.Boolean.Input("enabled", default=False, tooltip="Opt in only for comparison tests. Limited 1024 validation; 2048 stability unresolved.")],
             outputs=[io.Model.Output()], is_experimental=True,
         )
 
