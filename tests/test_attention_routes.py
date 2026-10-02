@@ -17,7 +17,7 @@ def tensors(tokens=1024, dtype=torch.bfloat16, device="cuda:0", shaped=False):
 
 
 class AttentionRouteTests(unittest.TestCase):
-    def test_hybrid_canvases_keep_connections_and_tested_settings(self):
+    def test_hybrid_canvases_keep_connections_and_staged_defaults(self):
         for variant, cache_mode in (("Hybrid_Edit", 0), ("Hybrid_NoCache_Edit", 4)):
             workflow = json.loads((ROOT / "workflows" / f"Qwen21_T8_1024_{variant}.json").read_text(encoding="utf-8"))
             by_id = {node["id"]: node for node in workflow["nodes"]}
@@ -29,7 +29,7 @@ class AttentionRouteTests(unittest.TestCase):
             self.assertEqual((sage["mode"], sage["widgets_values_named"]["backend_mode"]), (0, "sage_kitchen"))
             for kind in ("QwenImage21BlockCacheT8", "QwenImage21SpectrumT8"):
                 self.assertEqual(by_type[kind]["mode"], cache_mode)
-                self.assertEqual(by_type[kind]["widgets_values_named"]["threshold_mode"], "constant")
+                self.assertEqual(by_type[kind]["widgets_values_named"]["threshold_mode"], "two_stage")
             self.assertEqual(by_type["ModelAttentionBackend"]["mode"], 4)
             self.assertEqual(by_type["QwenImage21SolAttentionT8"]["mode"], 4)
             self.assertFalse(by_type["QwenImage21SolAttentionT8"]["widgets_values_named"]["enabled"])

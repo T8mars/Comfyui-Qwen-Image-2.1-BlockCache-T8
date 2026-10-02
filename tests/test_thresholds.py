@@ -8,8 +8,8 @@ from test_runtime import Sampling, cache, nodes, run_sampling, runtime, tiny_mod
 
 class ThresholdTests(unittest.TestCase):
     def test_constant_mode_preserves_old_thresholds(self):
-        block = cache.CacheConfig(threshold=0.03, late_threshold=1)
-        spectrum = cache.SpectrumConfig(guard_threshold=0.08, late_threshold=0)
+        block = cache.CacheConfig(threshold=0.03, threshold_mode="constant", late_threshold=1)
+        spectrum = cache.SpectrumConfig(guard_threshold=0.08, threshold_mode="constant", late_threshold=0)
         state = cache.CacheRuntime(block, spectrum, Sampling())
         self.assertEqual(state.splits, {})
         for sigma in (0.95, 0.7, 0.5, 0.2, 0.05):
@@ -93,7 +93,7 @@ class ThresholdTests(unittest.TestCase):
             self.assertEqual((state.cache.full, state.cache.hits), (6, 3))
 
     def test_old_node_calls_and_optional_appended_widgets(self):
-        for cls, expected, late in ((nodes.QwenImage21BlockCacheT8, 7, 0.03), (nodes.QwenImage21SpectrumT8, 9, 0.08)):
+        for cls, expected, late in ((nodes.QwenImage21BlockCacheT8, 7, 0.15), (nodes.QwenImage21SpectrumT8, 9, 0.25)):
             schema = cls.define_schema()
             inputs = schema.inputs
             self.assertEqual([v.id for v in inputs[expected + 1:]], ["threshold_mode", "split_ratio", "late_threshold"])
@@ -101,14 +101,14 @@ class ThresholdTests(unittest.TestCase):
             patched = cls.execute(tiny_model())[0]
             config = patched.model_options["transformer_options"][runtime.KEY]
             selected = config["block" if cls is nodes.QwenImage21BlockCacheT8 else "spectrum"]
-            self.assertEqual((selected.threshold_mode, selected.split_ratio, selected.late_threshold), ("constant", 0.5, late))
+            self.assertEqual((selected.threshold_mode, selected.split_ratio, selected.late_threshold), ("two_stage", 0.35, late))
 
     def test_native_spectrum_stages_compose_in_both_node_orders(self):
         for reverse in (False, True):
             installers = [
                 lambda m: nodes.QwenImage21BlockCacheT8.execute(m, residual_diff_threshold=0, threshold_mode="two_stage", late_threshold=0)[0],
                 lambda m: nodes.QwenImage21SpectrumT8.execute(m, history=3, degree=1, guard_threshold=1,
-                    start_percent=0, end_percent=1, threshold_mode="two_stage", late_threshold=0)[0],
+                    start_percent=0, end_percent=1, threshold_mode="two_stage", split_ratio=0.5, late_threshold=0)[0],
             ]
             model = tiny_model(True)
             for install in reversed(installers) if reverse else installers:

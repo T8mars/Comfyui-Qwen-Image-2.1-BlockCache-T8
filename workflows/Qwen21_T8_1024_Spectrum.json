@@ -474,7 +474,7 @@
       ],
       "size": [
         322.683203125,
-        202
+        274
       ],
       "flags": {},
       "order": 8,
@@ -562,25 +562,33 @@
       ],
       "title": "08 / T8 Block Cache / BYPASSED",
       "properties": {
-        "Node name for S&R": "QwenImage21BlockCacheT8"
+        "Node name for S&R": "QwenImage21BlockCacheT8",
+        "cnr_id": "qwen-image-21-blockcache-t8",
+        "ver": "0.1.6"
       },
       "widgets_values": [
-        0.08,
+        0.03,
         0.1,
-        0.85,
+        0.9,
         2,
         "cpu",
         8,
-        1024
+        1024,
+        "two_stage",
+        0.35,
+        0.15
       ],
       "widgets_values_named": {
-        "residual_diff_threshold": 0.08,
+        "residual_diff_threshold": 0.03,
         "start_percent": 0.1,
-        "end_percent": 0.85,
+        "end_percent": 0.9,
         "max_consecutive_hits": 2,
         "cache_device": "cpu",
         "metric_stride": 8,
-        "max_cache_mb": 1024
+        "max_cache_mb": 1024,
+        "threshold_mode": "two_stage",
+        "split_ratio": 0.35,
+        "late_threshold": 0.15
       }
     },
     {
@@ -592,7 +600,7 @@
       ],
       "size": [
         303.6998046875,
-        250
+        322
       ],
       "flags": {},
       "order": 9,
@@ -698,29 +706,37 @@
       ],
       "title": "09 / T8 Spectrum / ON",
       "properties": {
-        "Node name for S&R": "QwenImage21SpectrumT8"
+        "Node name for S&R": "QwenImage21SpectrumT8",
+        "cnr_id": "qwen-image-21-blockcache-t8",
+        "ver": "0.1.6"
       },
       "widgets_values": [
         4,
         2,
         0.01,
-        0.25,
-        0.15,
-        0.85,
+        0.08,
+        0.1,
+        0.9,
         1,
         "cpu",
-        1024
+        1024,
+        "two_stage",
+        0.35,
+        0.25
       ],
       "widgets_values_named": {
         "history": 4,
         "degree": 2,
         "ridge": 0.01,
-        "guard_threshold": 0.25,
-        "start_percent": 0.15,
-        "end_percent": 0.85,
+        "guard_threshold": 0.08,
+        "start_percent": 0.1,
+        "end_percent": 0.9,
         "max_consecutive_hits": 1,
         "cache_device": "cpu",
-        "max_cache_mb": 1024
+        "max_cache_mb": 1024,
+        "threshold_mode": "two_stage",
+        "split_ratio": 0.35,
+        "late_threshold": 0.25
       }
     },
     {
@@ -952,7 +968,7 @@
       ],
       "size": [
         470,
-        330
+        470
       ],
       "flags": {},
       "order": 3,
@@ -964,10 +980,10 @@
         "Node name for S&R": "Note"
       },
       "widgets_values": [
-        "官方 Qwen-Image-2.1 文生图 / 1024 / 25步 / 固定seed42。\n默认启用 Kitchen + T8 Spectrum，Block/Sage/Sol旁路。\n紫色节点为旁路：选中后 Ctrl+B 启用/旁路。\nSage 与 Kitchen 选择一个；Sol、Spectrum 按需使用，不必全开。\n0.1.3 保留 Core 前缀 KV 缓存；Block/Spectrum 各用自己的连续上限。\n图像编辑请用 Qwen21_T8_1024_Edit.json，参考图和 VAE 都须接入文本编码节点。\nCPU cache只占缓存内存，不表示主模型在CPU执行。\n请自行选择已安装的模型，模型不自动下载。\nSol的2048测试中发生过系统重启，默认disabled。测试必须严格串行，2048压力测试暂停。"
+        "官方 Qwen-Image-2.1 文生图 / 1024 / 25步 / 固定seed42。\n默认启用 Kitchen + T8 Spectrum，Block/Sage/Sol旁路。\n紫色节点为旁路：选中后 Ctrl+B 启用/旁路。\nSage 与 Kitchen 选择一个；Sol、Spectrum 按需使用，不必全开。\n0.1.3 保留 Core 前缀 KV 缓存；Block/Spectrum 各用自己的连续上限。\n图像编辑请用 Qwen21_T8_1024_Edit.json，参考图和 VAE 都须接入文本编码节点。\nCPU cache只占缓存内存，不表示主模型在CPU执行。\n请自行选择已安装的模型，模型不自动下载。\nSol的2048测试中发生过系统重启，默认disabled。测试必须严格串行，2048压力测试暂停。\n缓存预设 / Cache preset: two_stage, start=0.10, end=0.90, split_ratio=0.35。\n进度0.38切换 / Switch at progress 0.38: Block 0.03→0.15; Spectrum 0.08→0.25。\n旁路节点不执行 / Bypassed nodes remain inactive."
       ],
       "widgets_values_named": {
-        "text": "官方 Qwen-Image-2.1 文生图 / 1024 / 25步 / 固定seed42。\n默认启用 Kitchen + T8 Spectrum，Block/Sage/Sol旁路。\n紫色节点为旁路：选中后 Ctrl+B 启用/旁路。\nSage 与 Kitchen 选择一个；Sol、Spectrum 按需使用，不必全开。\n0.1.3 保留 Core 前缀 KV 缓存；Block/Spectrum 各用自己的连续上限。\n图像编辑请用 Qwen21_T8_1024_Edit.json，参考图和 VAE 都须接入文本编码节点。\nCPU cache只占缓存内存，不表示主模型在CPU执行。\n请自行选择已安装的模型，模型不自动下载。\nSol的2048测试中发生过系统重启，默认disabled。测试必须严格串行，2048压力测试暂停。"
+        "text": "官方 Qwen-Image-2.1 文生图 / 1024 / 25步 / 固定seed42。\n默认启用 Kitchen + T8 Spectrum，Block/Sage/Sol旁路。\n紫色节点为旁路：选中后 Ctrl+B 启用/旁路。\nSage 与 Kitchen 选择一个；Sol、Spectrum 按需使用，不必全开。\n0.1.3 保留 Core 前缀 KV 缓存；Block/Spectrum 各用自己的连续上限。\n图像编辑请用 Qwen21_T8_1024_Edit.json，参考图和 VAE 都须接入文本编码节点。\nCPU cache只占缓存内存，不表示主模型在CPU执行。\n请自行选择已安装的模型，模型不自动下载。\nSol的2048测试中发生过系统重启，默认disabled。测试必须严格串行，2048压力测试暂停。\n缓存预设 / Cache preset: two_stage, start=0.10, end=0.90, split_ratio=0.35。\n进度0.38切换 / Switch at progress 0.38: Block 0.03→0.15; Spectrum 0.08→0.25。\n旁路节点不执行 / Bypassed nodes remain inactive."
       },
       "color": "#432",
       "bgcolor": "#653"

@@ -32,23 +32,23 @@ class QwenImage21BlockCacheT8(io.ComfyNode):
             description="First-block target residual cache, preserving Core's reference/text KV cache. For editing, start with threshold 0.03; higher values may change pose and details.",
             is_experimental=True,
             inputs=[io.Model.Input("model"),
-                    io.Float.Input("residual_diff_threshold", default=0.08, min=0, max=1, step=0.01, tooltip="Fixed threshold, or early-stage threshold in two_stage mode. 固定阈值 / 两段模式的前段阈值。"),
+                    io.Float.Input("residual_diff_threshold", default=0.03, min=0, max=1, step=0.01, tooltip="Fixed threshold, or early-stage threshold in two_stage mode. 固定阈值 / 两段模式的前段阈值。"),
                     io.Float.Input("start_percent", default=0.10, min=0, max=1, step=0.001, round=0.001, tooltip="Native sampling progress, not a step count. Before this progress, no Block reuse. 开始进度。"),
-                    io.Float.Input("end_percent", default=0.85, min=0, max=1, step=0.001, round=0.001, tooltip="Native sampling progress, not a step count. From this progress onward, no Block reuse. 结束进度。"),
+                    io.Float.Input("end_percent", default=0.90, min=0, max=1, step=0.001, round=0.001, tooltip="Native sampling progress, not a step count. From this progress onward, no Block reuse. 结束进度。"),
                     io.Int.Input("max_consecutive_hits", default=2, min=1, max=10),
                     io.Combo.Input("cache_device", options=["cpu", "gpu"], default="cpu"),
                     io.Int.Input("metric_stride", default=8, min=1, max=32),
                     io.Int.Input("max_cache_mb", default=1024, min=16, max=32768),
-                    io.Combo.Input("threshold_mode", options=["constant", "two_stage"], default="constant", optional=True, tooltip="constant preserves old workflows. two_stage splits the active progress window into early/late thresholds. 两段阈值模式，按进度而非步数。"),
-                    io.Float.Input("split_ratio", default=0.5, min=0, max=1, step=0.01, optional=True, tooltip="Early share of the active window, not the whole sampling run. 0.5 = half early, half late. 可跳层区间内的前段比例。"),
-                    io.Float.Input("late_threshold", default=0.03, min=0, max=1, step=0.01, optional=True, tooltip="Late-stage residual threshold, used only in two_stage mode. 后段阈值，0表示该节点在后段不跳层。")],
+                    io.Combo.Input("threshold_mode", options=["constant", "two_stage"], default="two_stage", optional=True, tooltip="constant preserves old workflows. two_stage splits the active progress window into early/late thresholds. 两段阈值模式，按进度而非步数。"),
+                    io.Float.Input("split_ratio", default=0.35, min=0, max=1, step=0.01, optional=True, tooltip="Early share of the active window, not the whole sampling run. 0.5 = half early, half late. 可跳层区间内的前段比例。"),
+                    io.Float.Input("late_threshold", default=0.15, min=0, max=1, step=0.01, optional=True, tooltip="Late-stage residual threshold, used only in two_stage mode. 后段阈值，0表示该节点在后段不跳层。")],
             outputs=[io.Model.Output()],
         )
 
     @classmethod
-    def execute(cls, model, residual_diff_threshold=0.08, start_percent=0.10, end_percent=0.85,
+    def execute(cls, model, residual_diff_threshold=0.03, start_percent=0.10, end_percent=0.90,
                 max_consecutive_hits=2, cache_device="cpu", metric_stride=8, max_cache_mb=1024,
-                threshold_mode="constant", split_ratio=0.5, late_threshold=0.03):
+                threshold_mode="two_stage", split_ratio=0.35, late_threshold=0.15):
         require_qwen21(model)
         window(start_percent, end_percent, threshold_mode, split_ratio)
         config = CacheConfig(residual_diff_threshold, start_percent, end_percent, max_consecutive_hits, cache_device, metric_stride, max_cache_mb,
@@ -67,22 +67,22 @@ class QwenImage21SpectrumT8(io.ComfyNode):
                     io.Int.Input("history", default=4, min=3, max=8),
                     io.Int.Input("degree", default=2, min=1, max=3),
                     io.Float.Input("ridge", default=0.01, min=0.0001, max=1, step=0.001),
-                    io.Float.Input("guard_threshold", default=0.25, min=0, max=1, step=0.01, tooltip="Fixed guard threshold, or early-stage guard in two_stage mode. 固定阈值 / 两段模式的前段阈值。"),
-                    io.Float.Input("start_percent", default=0.15, min=0, max=1, step=0.001, round=0.001, tooltip="Native sampling progress, not a step count. Before this progress, no Spectrum prediction. 开始进度。"),
-                    io.Float.Input("end_percent", default=0.85, min=0, max=1, step=0.001, round=0.001, tooltip="Native sampling progress, not a step count. From this progress onward, no Spectrum prediction. 结束进度。"),
+                    io.Float.Input("guard_threshold", default=0.08, min=0, max=1, step=0.01, tooltip="Fixed guard threshold, or early-stage guard in two_stage mode. 固定阈值 / 两段模式的前段阈值。"),
+                    io.Float.Input("start_percent", default=0.10, min=0, max=1, step=0.001, round=0.001, tooltip="Native sampling progress, not a step count. Before this progress, no Spectrum prediction. 开始进度。"),
+                    io.Float.Input("end_percent", default=0.90, min=0, max=1, step=0.001, round=0.001, tooltip="Native sampling progress, not a step count. From this progress onward, no Spectrum prediction. 结束进度。"),
                     io.Int.Input("max_consecutive_hits", default=1, min=1, max=10),
                     io.Combo.Input("cache_device", options=["cpu", "gpu"], default="cpu"),
                     io.Int.Input("max_cache_mb", default=1024, min=16, max=32768),
-                    io.Combo.Input("threshold_mode", options=["constant", "two_stage"], default="constant", optional=True, tooltip="constant preserves old workflows. two_stage splits the active progress window into early/late thresholds. 两段阈值模式，按进度而非步数。"),
-                    io.Float.Input("split_ratio", default=0.5, min=0, max=1, step=0.01, optional=True, tooltip="Early share of the active window, not the whole sampling run. 0.5 = half early, half late. 可跳层区间内的前段比例。"),
-                    io.Float.Input("late_threshold", default=0.08, min=0, max=1, step=0.01, optional=True, tooltip="Late-stage guard threshold, used only in two_stage mode. 后段阈值，0表示该节点在后段不预测。")],
+                    io.Combo.Input("threshold_mode", options=["constant", "two_stage"], default="two_stage", optional=True, tooltip="constant preserves old workflows. two_stage splits the active progress window into early/late thresholds. 两段阈值模式，按进度而非步数。"),
+                    io.Float.Input("split_ratio", default=0.35, min=0, max=1, step=0.01, optional=True, tooltip="Early share of the active window, not the whole sampling run. 0.5 = half early, half late. 可跳层区间内的前段比例。"),
+                    io.Float.Input("late_threshold", default=0.25, min=0, max=1, step=0.01, optional=True, tooltip="Late-stage guard threshold, used only in two_stage mode. 后段阈值，0表示该节点在后段不预测。")],
             outputs=[io.Model.Output()],
         )
 
     @classmethod
-    def execute(cls, model, history=4, degree=2, ridge=0.01, guard_threshold=0.25, start_percent=0.15,
-                end_percent=0.85, max_consecutive_hits=1, cache_device="cpu", max_cache_mb=1024,
-                threshold_mode="constant", split_ratio=0.5, late_threshold=0.08):
+    def execute(cls, model, history=4, degree=2, ridge=0.01, guard_threshold=0.08, start_percent=0.10,
+                end_percent=0.90, max_consecutive_hits=1, cache_device="cpu", max_cache_mb=1024,
+                threshold_mode="two_stage", split_ratio=0.35, late_threshold=0.25):
         require_qwen21(model)
         window(start_percent, end_percent, threshold_mode, split_ratio)
         if history <= degree or ridge <= 0:

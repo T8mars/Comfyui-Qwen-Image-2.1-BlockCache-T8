@@ -38,8 +38,8 @@ git clone https://github.com/T8mars/Comfyui-Qwen-Image-2.1-BlockCache-T8.git
 
 | 节点 | 用途 | 起步设置 |
 | --- | --- | --- |
-| Block Cache | 检查首块变化，稳定时复用后续块残差 | 图像编辑先试 `residual_diff_threshold=0.03` |
-| Spectrum | 用历史完整计算预测残差；可与本仓库 Block Cache 串接 | 图像编辑先试 `guard_threshold=0.08` |
+| Block Cache | 检查首块变化，稳定时复用后续块残差 | 前段 `0.03`，后段 `0.15` |
+| Spectrum | 用历史完整计算预测残差；可与本仓库 Block Cache 串接 | 前段 `0.08`，后段 `0.25` |
 | Sage Attention | 原生 Sage 适配；可选 Sage/Kitchen 混合路由 | 默认 `backend_mode=sage` |
 | Sol Attention | 实验性稀疏注意力 | 默认 `enabled=false` |
 
@@ -47,13 +47,13 @@ Block/Spectrum 的阈值越高，越容易跳过计算，也越可能改变人�
 
 ### 前后两段阈值
 
-将 Block 或 Spectrum 的 `threshold_mode` 改为 `two_stage`：原阈值用于前段，`late_threshold` 用于后段，`split_ratio` 决定**可跳层区间内**前段所占比例。切换进度为：
+Block 和 Spectrum 默认使用 `threshold_mode=two_stage`：原阈值用于前段，`late_threshold` 用于后段，`split_ratio` 决定**可跳层区间内**前段所占比例。切换进度为：
 
 ```text
 start_percent + (end_percent - start_percent) × split_ratio
 ```
 
-例如 `start=0.15`、`end=0.85`、`split_ratio=0.5`，就在采样进度 `0.50` 切换阈值，**不是按步数切换**。默认 `constant` 保持旧工作流行为。两段模式已通过功能测试，下面的速度数据仍是固定阈值配置，不能当作两段模式跑分。
+默认 `start=0.10`、`end=0.90`、`split_ratio=0.35`，在采样进度 **0.38** 切换到后段阈值；区间外完整计算，按进度而非步数控制。选择 `constant` 可使用固定阈值。六份工作流已同步这些参数，各示例原有启用／旁路状态保留。旧画布已保存的数值不会自动覆盖，请重新导入新版工作流或手动修改。下方历史跑分使用固定阈值，不代表本次两段预设的性能。
 
 ## 实测与限制
 

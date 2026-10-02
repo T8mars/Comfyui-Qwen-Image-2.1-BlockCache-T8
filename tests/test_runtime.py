@@ -146,7 +146,7 @@ class NativeTests(unittest.TestCase):
         for edit, batch in ((False, 1), (True, 1), (True, 2)):
             with self.subTest(edit=edit, batch=batch):
                 base = tiny_model()
-                patched = nodes.QwenImage21BlockCacheT8.execute(base, residual_diff_threshold=0, start_percent=0, end_percent=1)[0]
+                patched = nodes.QwenImage21BlockCacheT8.execute(base, residual_diff_threshold=0, start_percent=0, end_percent=1, threshold_mode="constant")[0]
                 got, state = run_sampling(patched, [0.7, 0.6], edit=edit, batch=batch)
                 torch.manual_seed(24)
                 x, context = torch.randn(batch, 4, 2, 3), torch.randn(batch, 4, 8)
@@ -183,7 +183,7 @@ class NativeTests(unittest.TestCase):
         model = base.model.diffusion_model
         original = model.transformer_blocks[0].forward
         patched = nodes.QwenImage21BlockCacheT8.execute(base, residual_diff_threshold=1,
-                                                       start_percent=0, end_percent=1)[0]
+                                                       start_percent=0, end_percent=1, threshold_mode="constant")[0]
         self.assertNotIn("patches_replace", patched.model_options["transformer_options"])
         model.current_patcher = patched
         model.reset_prefix_cache(True)
@@ -215,7 +215,7 @@ class NativeTests(unittest.TestCase):
         base = tiny_model()
         model = base.model.diffusion_model
         patched = nodes.QwenImage21BlockCacheT8.execute(base, residual_diff_threshold=0,
-                                                       start_percent=0, end_percent=1)[0]
+                                                       start_percent=0, end_percent=1, threshold_mode="constant")[0]
         model.current_patcher = patched
         model.reset_prefix_cache(True)
         try:
@@ -252,7 +252,7 @@ class NativeTests(unittest.TestCase):
     def test_spectrum_forecast_and_shared_cap_in_both_orders(self):
         for order in (0, 1):
             patched = tiny_model(True)
-            calls = [lambda m: nodes.QwenImage21BlockCacheT8.execute(m, residual_diff_threshold=0, start_percent=0, end_percent=1)[0],
+            calls = [lambda m: nodes.QwenImage21BlockCacheT8.execute(m, residual_diff_threshold=0, start_percent=0, end_percent=1, threshold_mode="constant")[0],
                      lambda m: nodes.QwenImage21SpectrumT8.execute(m, history=3, degree=1, start_percent=0, end_percent=1)[0]]
             if order:
                 calls.reverse()

@@ -38,8 +38,8 @@ Choose the official Kitchen backend, generic KJ Sage, or T8 Sage. Their speedups
 
 | Node | What it does | Starting point |
 | --- | --- | --- |
-| Block Cache | Checks the first block; reuses later-block residuals when stable | For edits, try `residual_diff_threshold=0.03` |
-| Spectrum | Predicts residuals from full-forward history; composes with this package's Block Cache | For edits, try `guard_threshold=0.08` |
+| Block Cache | Checks the first block; reuses later-block residuals when stable | Early `0.03`, late `0.15` |
+| Spectrum | Predicts residuals from full-forward history; composes with this package's Block Cache | Early `0.08`, late `0.25` |
 | Sage Attention | Native Sage adapter with optional Sage/Kitchen routing | Default `backend_mode=sage` |
 | Sol Attention | Experimental sparse attention | Default `enabled=false` |
 
@@ -47,13 +47,13 @@ Higher Block/Spectrum thresholds skip more readily but can change identity, text
 
 ### Early/late thresholds
 
-Set Block or Spectrum `threshold_mode=two_stage`: the existing threshold controls the early stage, `late_threshold` the late stage, and `split_ratio` the early share **within the active window**:
+Block and Spectrum default to `threshold_mode=two_stage`: the existing threshold controls the early stage, `late_threshold` the late stage, and `split_ratio` the early share **within the active window**:
 
 ```text
 switch_progress = start_percent + (end_percent - start_percent) × split_ratio
 ```
 
-For start `0.15`, end `0.85`, and split `0.5`, the threshold changes at sampling progress `0.50`, **not at a step count**. Default `constant` preserves old workflows. Two-stage behavior has functional tests, but the speed figures below use constant thresholds.
+Defaults are start `0.10`, end `0.90`, and split `0.35`: the threshold changes at sampling progress **0.38**. Computation is full outside the active window. These controls use progress, not step counts. Select `constant` for a fixed threshold. All six workflows include the new settings while retaining their enabled/bypassed nodes. Saved values in existing canvases are not overwritten; import the updated workflow or edit them manually. Historical speed figures below use constant thresholds, not this new staged preset.
 
 ## Measured result and limits
 

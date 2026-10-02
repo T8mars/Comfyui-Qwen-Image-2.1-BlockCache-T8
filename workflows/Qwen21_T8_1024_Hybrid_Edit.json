@@ -638,31 +638,31 @@
       "properties": {
         "Node name for S&R": "QwenImage21BlockCacheT8",
         "cnr_id": "qwen-image-21-blockcache-t8",
-        "ver": "0.1.4"
+        "ver": "0.1.6"
       },
       "widgets_values": [
         0.03,
         0.1,
-        0.85,
+        0.9,
         2,
         "cpu",
         8,
         1024,
-        "constant",
-        0.5,
-        0.03
+        "two_stage",
+        0.35,
+        0.15
       ],
       "widgets_values_named": {
         "residual_diff_threshold": 0.03,
         "start_percent": 0.1,
-        "end_percent": 0.85,
+        "end_percent": 0.9,
         "max_consecutive_hits": 2,
         "cache_device": "cpu",
         "metric_stride": 8,
         "max_cache_mb": 1024,
-        "threshold_mode": "constant",
-        "split_ratio": 0.5,
-        "late_threshold": 0.03
+        "threshold_mode": "two_stage",
+        "split_ratio": 0.35,
+        "late_threshold": 0.15
       }
     },
     {
@@ -812,35 +812,35 @@
       "properties": {
         "Node name for S&R": "QwenImage21SpectrumT8",
         "cnr_id": "qwen-image-21-blockcache-t8",
-        "ver": "0.1.4"
+        "ver": "0.1.6"
       },
       "widgets_values": [
         4,
         2,
         0.01,
         0.08,
-        0.15,
-        0.85,
+        0.1,
+        0.9,
         1,
         "cpu",
         1024,
-        "constant",
-        0.5,
-        0.08
+        "two_stage",
+        0.35,
+        0.25
       ],
       "widgets_values_named": {
         "history": 4,
         "degree": 2,
         "ridge": 0.01,
         "guard_threshold": 0.08,
-        "start_percent": 0.15,
-        "end_percent": 0.85,
+        "start_percent": 0.1,
+        "end_percent": 0.9,
         "max_consecutive_hits": 1,
         "cache_device": "cpu",
         "max_cache_mb": 1024,
-        "threshold_mode": "constant",
-        "split_ratio": 0.5,
-        "late_threshold": 0.08
+        "threshold_mode": "two_stage",
+        "split_ratio": 0.35,
+        "late_threshold": 0.25
       }
     },
     {
@@ -1078,7 +1078,7 @@
       ],
       "size": [
         540,
-        420
+        470
       ],
       "flags": {},
       "order": 3,
@@ -1090,10 +1090,10 @@
         "Node name for S&R": "Note"
       },
       "widgets_values": [
-        "Qwen 2.1 图像编辑 / Image edit — Sage + Kitchen hybrid\n参考 IMAGE 和 VAE 均须连接编码器。请选择自己的参考图；10A.jpg 不随插件分发。\nSeed 42 / 40 steps / encoder 1024 / target 768×1376.\nSage backend_mode=sage_kitchen；官方 Kitchen 选择节点与 Sol 已旁路。\nBlock 0.03 + Spectrum 0.08，固定阈值 constant。\n两段阈值可选 two_stage：按原生进度，不按步数；split_ratio 控制区间内前段比例，late_threshold 为后段阈值。\n混合模式未测得超过 Kitchen 单用的收益，不保证加速叠加。近似计算会改变细节。\n保持参考图比例时，可用编码器 LATENT 输出替换当前竖图 LATENT。请严格串行运行。"
+        "Qwen 2.1 图像编辑 / Image edit — Sage + Kitchen hybrid\n参考 IMAGE 和 VAE 均须连接编码器。请选择自己的参考图；10A.jpg 不随插件分发。\nSeed 42 / 40 steps / encoder 1024 / target 768×1376.\nSage backend_mode=sage_kitchen；官方 Kitchen 选择节点与 Sol 已旁路。\n混合模式未测得超过 Kitchen 单用的收益，不保证加速叠加。近似计算会改变细节。\n保持参考图比例时，可用编码器 LATENT 输出替换当前竖图 LATENT。请严格串行运行。\n缓存预设 / Cache preset: two_stage, start=0.10, end=0.90, split_ratio=0.35。\n进度0.38切换 / Switch at progress 0.38: Block 0.03→0.15; Spectrum 0.08→0.25。\n旁路节点不执行 / Bypassed nodes remain inactive."
       ],
       "widgets_values_named": {
-        "text": "Qwen 2.1 图像编辑 / Image edit — Sage + Kitchen hybrid\n参考 IMAGE 和 VAE 均须连接编码器。请选择自己的参考图；10A.jpg 不随插件分发。\nSeed 42 / 40 steps / encoder 1024 / target 768×1376.\nSage backend_mode=sage_kitchen；官方 Kitchen 选择节点与 Sol 已旁路。\nBlock 0.03 + Spectrum 0.08，固定阈值 constant。\n两段阈值可选 two_stage：按原生进度，不按步数；split_ratio 控制区间内前段比例，late_threshold 为后段阈值。\n混合模式未测得超过 Kitchen 单用的收益，不保证加速叠加。近似计算会改变细节。\n保持参考图比例时，可用编码器 LATENT 输出替换当前竖图 LATENT。请严格串行运行。"
+        "text": "Qwen 2.1 图像编辑 / Image edit — Sage + Kitchen hybrid\n参考 IMAGE 和 VAE 均须连接编码器。请选择自己的参考图；10A.jpg 不随插件分发。\nSeed 42 / 40 steps / encoder 1024 / target 768×1376.\nSage backend_mode=sage_kitchen；官方 Kitchen 选择节点与 Sol 已旁路。\n混合模式未测得超过 Kitchen 单用的收益，不保证加速叠加。近似计算会改变细节。\n保持参考图比例时，可用编码器 LATENT 输出替换当前竖图 LATENT。请严格串行运行。\n缓存预设 / Cache preset: two_stage, start=0.10, end=0.90, split_ratio=0.35。\n进度0.38切换 / Switch at progress 0.38: Block 0.03→0.15; Spectrum 0.08→0.25。\n旁路节点不执行 / Bypassed nodes remain inactive."
       },
       "color": "#432",
       "bgcolor": "#653"

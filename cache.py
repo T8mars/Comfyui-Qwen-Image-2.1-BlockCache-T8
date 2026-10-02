@@ -9,16 +9,16 @@ import torch
 
 @dataclass(frozen=True)
 class CacheConfig:
-    threshold: float = 0.08
+    threshold: float = 0.03
     start_percent: float = 0.10
-    end_percent: float = 0.85
+    end_percent: float = 0.90
     max_consecutive_hits: int = 2
     cache_device: str = "cpu"
     metric_stride: int = 8
     max_cache_mb: int = 1024
-    threshold_mode: str = "constant"
-    split_ratio: float = 0.5
-    late_threshold: float = 0.03
+    threshold_mode: str = "two_stage"
+    split_ratio: float = 0.35
+    late_threshold: float = 0.15
 
 
 @dataclass(frozen=True)
@@ -26,15 +26,15 @@ class SpectrumConfig:
     history: int = 4
     degree: int = 2
     ridge: float = 0.01
-    guard_threshold: float = 0.25
-    start_percent: float = 0.15
-    end_percent: float = 0.85
+    guard_threshold: float = 0.08
+    start_percent: float = 0.10
+    end_percent: float = 0.90
     max_consecutive_hits: int = 1
     cache_device: str = "cpu"
     max_cache_mb: int = 1024
-    threshold_mode: str = "constant"
-    split_ratio: float = 0.5
-    late_threshold: float = 0.08
+    threshold_mode: str = "two_stage"
+    split_ratio: float = 0.35
+    late_threshold: float = 0.25
 
 
 @dataclass

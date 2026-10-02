@@ -1,17 +1,17 @@
 {
   "project": "Comfyui-Qwen-Image-2.1-BlockCache-T8",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "status": "experimental",
   "repository": "https://github.com/T8mars/Comfyui-Qwen-Image-2.1-BlockCache-T8",
   "registry_id": "qwen-image-21-blockcache-t8",
   "publisher_id": "t8star",
   "core_baseline": "e638023d54497dbe0579565e5de4bb7076899592",
   "kitchen_baseline": "0.2.35",
-  "validation_date": "2026-09-23",
+  "validation_date": "2026-10-02",
   "trained_model_validation": "INT8 7B T2I at 512/1024 and 1MP portrait editing at 40 steps; conservative edit 34.431s to 24.742s with Core compiler enabled; limited input/seed coverage",
   "canvas_validation": ["Qwen21_T8_1024_T2I.json", "Qwen21_T8_1024_Spectrum.json", "Qwen21_T8_1024_Sol.json", "Qwen21_T8_1024_Edit.json", "Qwen21_T8_1024_Hybrid_Edit.json", "Qwen21_T8_1024_Hybrid_NoCache_Edit.json"],
   "sol_validation": "1024 T2I about 4% sampler gain with visible detail changes; 1MP edit plus both caches passed with 430 real Sol calls but no extra gain. Core compiler disabled, extra VRAM headroom. 2048 restart unresolved; disabled by default",
-  "latest_audit": "0.1.4 native-progress threshold and attention-route regressions, six serial real edit canvas runs, hybrid workflow promotion without changing sampling settings. Historical 50-round audit covered 0.1.2, not this revision.",
-  "release_notes": "Documentation update: concise bilingual setup, workflows, settings, and measured limitations. Runtime behavior unchanged.",
+  "latest_audit": "0.1.6: 59 CPU/static tests, all six canvas imports, staged save/reload and prompt checks passed on Core a71693224. No full-model sampling or new performance measurement for this default-only update.",
+  "release_notes": "Two-stage defaults: progress window 0.10-0.90, split ratio 0.35, Block 0.03/0.15 and Spectrum 0.08/0.25. All six canvas workflows updated; historical benchmarks use prior constant settings.",
   "local_only_documents": ["roadmap.md", "SKILL.md", "research_agent.md"]
 }

@@ -22,9 +22,9 @@ const root = path.resolve(__dirname, '..');
       for (const node of widgets) {
         const old = saved.nodes.find(n => n.type === node.type).widgets_values_named;
         for (const [name,value] of Object.entries(old)) assert.deepEqual(node.values[name],value,`${variant}/${name}`);
-        assert.equal(node.values.threshold_mode,'constant');
-        assert.equal(node.values.split_ratio,0.5);
-        assert.equal(node.values.late_threshold,node.type==='QwenImage21BlockCacheT8'?0.03:0.08);
+        assert.equal(node.values.threshold_mode,'two_stage');
+        assert.equal(node.values.split_ratio,0.35);
+        assert.equal(node.values.late_threshold,node.type==='QwenImage21BlockCacheT8'?0.15:0.25);
       }
       assert.equal(await page.evaluate(() => window.app.graph._nodes
         .find(n=>n.type==='QwenImage21SageAttentionT8').widgets.find(w=>w.name==='backend_mode').value),variant.startsWith('Hybrid')?'sage_kitchen':'sage');
