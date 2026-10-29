@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import os
 from pathlib import Path
 import sys
 import types
@@ -10,7 +11,8 @@ import torch
 
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT.parents[1]))
+# A separate Core checkout can be selected for compatibility tests.
+sys.path.insert(0, os.environ.get("COMFYUI_ROOT", str(ROOT.parent.parent)))
 import comfy.options
 
 comfy.options.enable_args_parsing(False)
@@ -64,7 +66,7 @@ def tiny_model(additive=False):
     return comfy.model_patcher.ModelPatcher(holder, torch.device("cpu"), torch.device("cpu"))
 
 
-def run_sampling(patcher, sigmas, uuids=None, edit=False, batch=1, error=False):
+def run_sampling(patcher, sigmas, uuids=None, edit=False, batch=1, error=False, **model_kwargs):
     original_options = comfy.model_patcher.create_model_options_clone(patcher.model_options)
     original_options["transformer_options"]["wrappers"] = patcher.wrappers
     guider = types.SimpleNamespace(model_patcher=patcher, model_options=original_options)
@@ -83,7 +85,7 @@ def run_sampling(patcher, sigmas, uuids=None, edit=False, batch=1, error=False):
             options.update(sigmas=torch.full((batch,), sigma), uuids=[uuids[i] if uuids else "positive"], cond_or_uncond=[0])
             if error:
                 raise RuntimeError("test cancellation")
-            outputs.append(model(x.clone(), torch.full((batch,), sigma), context, refs, [2] if edit else None, options))
+            outputs.append(model(x.clone(), torch.full((batch,), sigma), context, refs, [2] if edit else None, options, **model_kwargs))
         return outputs
 
     executor = pe.WrapperExecutor.new_class_executor(execute, guider, [runtime.sample_wrapper])
@@ -195,9 +197,10 @@ class NativeTests(unittest.TestCase):
             outputs, state = run_sampling(patched, [0.7, 0.6, 0.5], edit=True)
             self.assertEqual(state.cache.hits, 2)
             self.assertTrue(model.prefix_cache.filled(3))
-            self.assertEqual(sum(n == prefix for _, n, prefix in calls), 3)
-            self.assertEqual(sum(i == 0 and prefix == 0 for i, _, prefix in calls), 3)
-            self.assertEqual(sum(i == 1 and prefix == 0 for i, _, prefix in calls), 1)
+            # Older Core computes prefix and target together on the initial pass.
+            self.assertEqual(sum(prefix > 0 for _, _, prefix in calls), 3)
+            self.assertEqual(sum(i == 0 and n - prefix == 6 for i, n, prefix in calls), 3)
+            self.assertEqual(sum(i == 1 and n - prefix == 6 for i, n, prefix in calls), 1)
             self.assertEqual(outputs[-1].shape, (1, 4, 2, 3))
             self.assertEqual(model.transformer_blocks[0].forward, original)
         finally:
