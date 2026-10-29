@@ -1,4 +1,5 @@
 import importlib.util
+import os
 from pathlib import Path
 import sys
 from types import SimpleNamespace
@@ -11,7 +12,7 @@ import torch.nn.functional as F
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT.parents[1]
+CORE = Path(os.environ.get("COMFYUI_ROOT", ROOT.parent.parent))
 sys.path.insert(0, str(CORE))
 _argv = sys.argv
 try:
@@ -140,6 +141,15 @@ class SolMathTests(unittest.TestCase):
         self.assertIs(output, marker)
         preferred.assert_called_once()
         base.assert_not_called()
+
+    def test_legacy_attention_without_preferred_backend_uses_native_function(self):
+        model = SimpleNamespace(transformer_blocks=[SimpleNamespace(attn=SimpleNamespace())])
+        base = Mock(return_value=object())
+        override = attention.make_override(model, None, False, attention.SolConfig(), 32, 65, None, {})
+        q, k, v = self.tensors(33, heads=1)
+        result = override(base, q.flatten(2), k.flatten(2), v.flatten(2), 1)
+        self.assertIs(result, base.return_value)
+        base.assert_called_once()
 
     def test_mask_reference_and_dtype_guards_decline_before_gpu_kernel_probe(self):
         def metadata(tokens, dtype=torch.bfloat16):

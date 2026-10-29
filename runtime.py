@@ -82,14 +82,29 @@ def sample_wrapper(executor, *args, **kwargs):
         guider.model_options = original
 
 
+def _is_prefetched_entry(entry):
+    # Raw units may also be tuples: (block, *WritableWeight) for prefix KV caches.
+    return (isinstance(entry, tuple) and len(entry) == 2
+            and isinstance(entry[1], tuple) and len(entry[1]) == 2)
+
+
 def finish_prefetch(model, device):
     prefetch.prefetch_queue_pop(None, device, None, malloc_scope="block")
     block_ids = {id(b) for b in model.transformer_blocks}
     for queue in reversed(prefetch.PREFETCH_QUEUES):
-        if not any(id(entry[1][0] if isinstance(entry, tuple) else entry) in block_ids for entry in queue):
+        for entry in queue:
+            if _is_prefetched_entry(entry):
+                module = entry[1][0]
+            elif isinstance(entry, (tuple, list)) and entry:
+                module = entry[0]
+            else:
+                module = entry
+            if id(module) in block_ids:
+                break
+        else:
             continue
         for entry in queue:
-            if isinstance(entry, tuple):
+            if _is_prefetched_entry(entry):
                 stream, (module, modules) = entry
                 if stream is not None:
                     stream.wait_stream(comfy.model_management.current_stream(device))

@@ -15,6 +15,8 @@ git clone https://github.com/T8mars/Comfyui-Qwen-Image-2.1-BlockCache-T8.git
 
 安装后重启 ComfyUI。T8 Sage 需要在同一 Python 环境安装兼容的 SageAttention；Kitchen 使用 ComfyUI 自带的 `Model Attention Backend` 节点。已装旧仓库名 `Comfyui-Qwen-Image-2.1-T8` 的用户请更新原目录的 Git 远端，不要重复安装。
 
+`0.1.7` 修复了 ComfyUI `0.42 / 0.43` 前缀 KV 缓存与 Block Cache / Spectrum 同时使用时的 `cannot unpack non-iterable WritableWeight object` 报错。更新插件后重启即可，原生 `QwenImage21Cache` 可继续使用 `device=auto`，无需切换 T8 的 `cache_device`。同时保留旧版普通预取队列的清理，并兼容 `0.37.0` 尚无 `comfy_attention` 字段时的原生注意力回退。
+
 ## 画布工作流
 
 以下都是可拖入 ComfyUI 的**前端画布 JSON**，不是 API 工作流。导入后选择本机模型；编辑工作流还需换成自己的参考图。

@@ -15,6 +15,8 @@ git clone https://github.com/T8mars/Comfyui-Qwen-Image-2.1-BlockCache-T8.git
 
 Restart ComfyUI. T8 Sage requires a compatible SageAttention in the same Python environment. Kitchen uses ComfyUI's own `Model Attention Backend` node. If you installed the former `Comfyui-Qwen-Image-2.1-T8` repository, update that installation's Git remote instead of installing a second copy.
 
+`0.1.7` fixes `cannot unpack non-iterable WritableWeight object` when Block Cache / Spectrum skips blocks with ComfyUI `0.42 / 0.43` prefix KV caching. Update this extension and restart; keep native `QwenImage21Cache` at `device=auto` without changing T8's `cache_device`. Legacy prefetch cleanup is preserved, and native attention fallback also supports `0.37.0` modules without a `comfy_attention` field.
+
 ## Drag-and-drop workflows
 
 These are **frontend canvas JSONs**, not API prompts. After importing, select your local models; for editing, provide your own reference image.

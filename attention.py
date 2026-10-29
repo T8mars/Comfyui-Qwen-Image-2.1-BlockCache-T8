@@ -50,7 +50,8 @@ def make_override(model, previous, sage, sol, target_tokens, total_tokens, progr
             if previous is not None:
                 return previous(func, q, k, v, heads, **common)
             index = kwargs.get("transformer_options", {}).get("block_index", 0)
-            preferred = model.transformer_blocks[index].attn.comfy_attention.function
+            backend = getattr(model.transformer_blocks[index].attn, "comfy_attention", None)
+            preferred = backend.function if backend is not None else None
             return (preferred if preferred is not None else func)(q, k, v, heads, **common)
 
         if sol is None:
